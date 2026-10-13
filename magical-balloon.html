@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Magical Balloon Pop Night</title>
+  
+  <!-- Web App Metadata for Mobile & Android PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030712">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    * {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #030712;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #balloonField {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .balloon-node {
+      position: absolute;
+      cursor: pointer;
+      will-change: transform;
+      touch-action: none;
+      transition: opacity 0.08s ease-out;
+    }
+
+    /* Floating pop point tags */
+    .pop-tag {
+      position: absolute;
+      pointer-events: none;
+      z-index: 50;
+      animation: floatUpFade 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      white-space: nowrap;
+      font-weight: 800;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes floatUpFade {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(0.6);
+      }
+      50% {
+        transform: translate(-50%, -35px) scale(1.15);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -70px) scale(1);
+      }
+    }
+
+    /* Praise popup */
+    .praise-banner {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      pointer-events: none;
+      z-index: 60;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .praise-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white select-none">
+
+  <!-- Canvas for stars, shooting stars, and popping particles -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Layer for balloons -->
+  <div id="balloonField"></div>
+
+  <header class="absolute top-0 left-0 w-full z-40 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
+    
+    <!-- Left: Score & Combo Streak -->
+    <div class="flex items-center gap-2 pointer-events-auto">
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700/60 shadow-lg shadow-black/40">
+        <span class="text-xl sm:text-2xl">🎈</span>
+        <span id="scoreText" class="text-lg sm:text-2xl font-black text-amber-300 tracking-wide transition-transform duration-150 inline-block">0</span>
+      </div>
+
+      <div id="streakBadge" class="hidden items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 border border-amber-300 text-white shadow-lg shadow-amber-500/30 animate-pulse">
+        <span class="text-xs sm:text-sm font-extrabold uppercase">Streak</span>
+        <span id="streakCount" class="text-xs sm:text-sm font-black">x3</span>
+      </div>
+    </div>
+
+    <!-- Right: Speed Selector, Sound Toggle, and Optional PWA Install -->
+    <div class="flex items-center gap-2 pointer-events-auto">
+      
+      <!-- Speed Presets -->
+      <div class="flex rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/60 p-1 shadow-lg shadow-black/40">
+        <button id="btnSlow" title="Slow pace for toddlers" class="px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all bg-emerald-500 text-slate-950 shadow">
+          🐢 Slow
+        </button>
+        <button id="btnNorm" title="Normal speed" class="px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
+          🐰 Med
+        </button>
+        <button id="btnFast" title="Fast pace" class="px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
+          🐆 Fast
+        </button>
+      </div>
+
+      <!-- Audio Mute Button -->
+      <button id="audioBtn" class="p-2 sm:px-3 sm:py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/60 text-slate-200 hover:text-amber-300 transition-colors shadow-lg shadow-black/40 flex items-center justify-center">
+        <span id="audioIcon" class="text-base sm:text-lg">🔊</span>
+      </button>
+
+      <!-- PWA Install Button (shown when available on Android/Chrome) -->
+      <button id="installBtn" class="hidden px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-pink-500 border border-pink-400 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-pink-500/30 animate-bounce">
+        📲 Install
+      </button>
+    </div>
+  </header>
+
+  <!-- Praise Popup Notification -->
+  <div id="praiseBanner" class="praise-banner">
+    <div class="px-6 py-2.5 rounded-3xl bg-gradient-to-r from-amber-400 via-rose-400 to-purple-500 border-2 border-white/90 text-white font-black text-xl sm:text-3xl text-center shadow-[0_10px_35px_rgba(244,63,94,0.6)]">
+      🌟 Awesome!
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       AUDIO SYNTHESIZER (Pure Web Audio API - Unlocks on first interaction)
+       ========================================================================= */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playPop(freq = 400) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq * 1.5, now);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(60, freq * 0.2), now + 0.08);
+
+          gain.gain.setValueAtTime(0.5, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } catch (e) {
+          // Ignore audio node glitches
+        }
+      }
+
+      playMagicChime() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            try {
+              const now = this.ctx.currentTime;
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, now);
+
+              gain.gain.setValueAtTime(0.25, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+
+              osc.start(now);
+              osc.stop(now + 0.28);
+            } catch (e) {}
+          }, idx * 60);
+        });
+      }
+
+      playAnimalChirp(type) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          if (type === 'meow') {
+            // High slide meow chirp
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(680, now);
+            osc.frequency.exponentialRampToValueAtTime(920, now + 0.12);
+            osc.frequency.exponentialRampToValueAtTime(540, now + 0.22);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+          } else if (type === 'ribbit') {
+            // Low quirky croak
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.setValueAtTime(140, now + 0.06);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          } else if (type === 'woof') {
+            // Cheerful quick bark
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(360, now);
+            osc.frequency.exponentialRampToValueAtTime(180, now + 0.11);
+            gain.gain.setValueAtTime(0.45, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          } else {
+            // Default cheerful animal hop
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.exponentialRampToValueAtTime(700, now + 0.09);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          }
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } catch (e) {}
+      }
+
+      playCelebration() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const chord = [440, 554.37, 659.25, 880];
+        chord.forEach((freq) => {
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+          } catch (e) {}
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* =========================================================================
+       CANVAS GRAPHICS: STARS, MOON & POPPING EXPLOSION PARTICLES
+       ========================================================================= */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = 0;
+    let height = 0;
+    let stars = [];
+    let shootingStars = [];
+    let particles = [];
+    let shockwaves = [];
+
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      const count = Math.floor((width * height) / 3800);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: 0.6 + Math.random() * 1.5,
+          alpha: 0.2 + Math.random() * 0.8,
+          speed: 0.015 + Math.random() * 0.035,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function spawnShootingStar() {
+      if (shootingStars.length >= 2) return;
+      shootingStars.push({
+        x: Math.random() * (width * 0.8),
+        y: Math.random() * (height * 0.4),
+        length: 80 + Math.random() * 70,
+        speed: 12 + Math.random() * 8,
+        angle: (Math.PI / 4) + (Math.random() * 0.2 - 0.1),
+        alpha: 1,
+        life: 0
+      });
+    }
+
+    function drawNightSky() {
+      // Deep cosmic gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0, '#020617'); // slate 950
+      grad.addColorStop(0.4, '#0B132B');
+      grad.addColorStop(0.75, '#1C2541');
+      grad.addColorStop(1, '#2E1A47'); // soft purple glow at bottom
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Glowing Crescent Moon (top right)
+      const moonX = width - Math.max(50, width * 0.12);
+      const moonY = Math.max(70, height * 0.14);
+      const moonR = Math.min(36, Math.max(24, width * 0.04));
+
+      // Moon radial glow
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3.5);
+      moonGlow.addColorStop(0, 'rgba(254, 243, 199, 0.35)');
+      moonGlow.addColorStop(0.5, 'rgba(253, 230, 138, 0.12)');
+      moonGlow.addColorStop(1, 'rgba(253, 230, 138, 0)');
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crescent Moon Body
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = '#FEF3C7';
+      ctx.shadowColor = '#FDE68A';
+      ctx.shadowBlur = 18;
+      ctx.fill();
+
+      // Subtract inner circle to form crescent
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(moonX - moonR * 0.5, moonY - moonR * 0.35, moonR * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Twinkling stars
+      for (let s of stars) {
+        s.phase += s.speed;
+        const currentAlpha = Math.max(0.1, s.alpha + Math.sin(s.phase) * 0.3);
+        ctx.fillStyle = `rgba(255, 255, 255, ${currentAlpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Shooting stars
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const ss = shootingStars[i];
+        ss.x += Math.cos(ss.angle) * ss.speed;
+        ss.y += Math.sin(ss.angle) * ss.speed;
+        ss.alpha -= 0.02;
+
+        if (ss.alpha <= 0) {
+          shootingStars.splice(i, 1);
+          continue;
+        }
+
+        const tailX = ss.x - Math.cos(ss.angle) * ss.length;
+        const tailY = ss.y - Math.sin(ss.angle) * ss.length;
+        const trailGrad = ctx.createLinearGradient(ss.x, ss.y, tailX, tailY);
+        trailGrad.addColorStop(0, `rgba(255, 255, 255, ${ss.alpha})`);
+        trailGrad.addColorStop(1, `rgba(255, 255, 255, 0)`);
+
+        ctx.strokeStyle = trailGrad;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+      }
+    }
+
+    // Trigger particle explosions on balloon pops
+    function createExplosion(x, y, color, isRainbow = false, isAnimal = false) {
+      // 1. Expanding shockwave ring
+      shockwaves.push({
+        x,
+        y,
+        radius: 8,
+        maxRadius: isRainbow ? 75 : 55,
+        alpha: 0.9,
+        color: isRainbow ? '#F472B6' : color
+      });
+
+      // 2. Flying confetti, sparkles & paws
+      const count = isRainbow ? 36 : (isAnimal ? 28 : 22);
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 6.5;
+        const shapes = ['circle', 'rect', 'star'];
+        if (isAnimal) shapes.push('paw', 'heart');
+
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.5,
+          color: isRainbow
+            ? `hsl(${Math.random() * 360}, 95%, 65%)`
+            : (Math.random() > 0.4 ? color : '#FFFFFF'),
+          size: 4 + Math.random() * 6,
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.25,
+          shape: shapes[Math.floor(Math.random() * shapes.length)],
+          gravity: 0.16,
+          drag: 0.97,
+          alpha: 1,
+          decay: 0.02 + Math.random() * 0.025
+        });
+      }
+    }
+
+    function updateAndDrawParticles() {
+      // Draw shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.radius += (sw.maxRadius - sw.radius) * 0.2;
+        sw.alpha -= 0.045;
+
+        if (sw.alpha <= 0) {
+          shockwaves.splice(i, 1);
+          continue;
+        }
+
+        ctx.strokeStyle = sw.color;
+        ctx.globalAlpha = sw.alpha;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw explosion particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.vx *= p.drag;
+        p.vy = p.vy * p.drag + p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.vRot;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        } else if (p.shape === 'star') {
+          ctx.beginPath();
+          for (let s = 0; s < 5; s++) {
+            ctx.lineTo(Math.cos((18 + s * 72) * Math.PI / 180) * p.size, -Math.sin((18 + s * 72) * Math.PI / 180) * p.size);
+            ctx.lineTo(Math.cos((54 + s * 72) * Math.PI / 180) * (p.size / 2), -Math.sin((54 + s * 72) * Math.PI / 180) * (p.size / 2));
+          }
+          ctx.closePath();
+          ctx.fill();
+        } else if (p.shape === 'paw') {
+          // Cute miniature paw pad
+          ctx.beginPath();
+          ctx.ellipse(0, 1, p.size * 0.6, p.size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(-p.size * 0.4, -p.size * 0.4, p.size * 0.22, 0, Math.PI * 2);
+          ctx.arc(0, -p.size * 0.55, p.size * 0.22, 0, Math.PI * 2);
+          ctx.arc(p.size * 0.4, -p.size * 0.4, p.size * 0.22, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Circle
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    /* =========================================================================
+       BALLOON ASSETS: COLOR PALETTES, EMOJI FACES & ANIMAL DESIGNS
+       ========================================================================= */
+    const BALLOON_PALETTES = [
+      { main: '#F43F5E', light: '#FDA4AF', dark: '#BE123C' }, // Ruby Pink
+      { main: '#3B82F6', light: '#93C5FD', dark: '#1D4ED8' }, // Sky Blue
+      { main: '#10B981', light: '#6EE7B7', dark: '#047857' }, // Mint Green
+      { main: '#F59E0B', light: '#FDE68A', dark: '#B45309' }, // Amber Yellow
+      { main: '#8B5CF6', light: '#C4B5FD', dark: '#6D28D9' }, // Violet
+      { main: '#EC4899', light: '#F9A8D4', dark: '#BE185D' }, // Bubblegum
+      { main: '#06B6D4', light: '#67E8F9', dark: '#0E7490' }, // Cyan
+      { main: '#F97316', light: '#FDBA74', dark: '#C2410C' }  // Warm Orange
+    ];
+
+    const EMOJI_FACES = [
+      // 1. Cheerful Smile
+      `<g>
+        <ellipse cx="38" cy="46" rx="3.5" ry="4.5" fill="#1E293B"/>
+        <ellipse cx="62" cy="46" rx="3.5" ry="4.5" fill="#1E293B"/>
+        <circle cx="39" cy="44" r="1.3" fill="#FFFFFF"/>
+        <circle cx="63" cy="44" r="1.3" fill="#FFFFFF"/>
+        <ellipse cx="30" cy="52" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+        <ellipse cx="70" cy="52" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+        <path d="M42 52 Q50 60 58 52" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      </g>`,
+      // 2. Playful Wink & Tongue
+      `<g>
+        <path d="M34 47 Q38 43 42 47" stroke="#1E293B" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <ellipse cx="62" cy="46" rx="3.5" ry="4.5" fill="#1E293B"/>
+        <circle cx="63" cy="44" r="1.3" fill="#FFFFFF"/>
+        <ellipse cx="30" cy="52" rx="4" ry="2.5" fill="#FB7185" opacity="0.6"/>
+        <ellipse cx="70" cy="52" rx="4" ry="2.5" fill="#FB7185" opacity="0.6"/>
+        <path d="M43 51 Q50 58 57 51" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M48 55 Q50 63 54 55 Z" fill="#FB7185"/>
+      </g>`,
+      // 3. Starry Eyed
+      `<g>
+        <path d="M38 41 L40 45 L44 46 L41 49 L42 53 L38 50 L34 53 L35 49 L32 46 L36 45 Z" fill="#F59E0B"/>
+        <path d="M62 41 L64 45 L68 46 L65 49 L66 53 L62 50 L58 53 L59 49 L56 46 L60 45 Z" fill="#F59E0B"/>
+        <ellipse cx="28" cy="52" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.7"/>
+        <ellipse cx="72" cy="52" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.7"/>
+        <path d="M44 54 Q50 61 56 54" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      </g>`,
+      // 4. Laughing Happy Joy
+      `<g>
+        <path d="M34 48 Q38 43 42 48" stroke="#1E293B" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <path d="M58 48 Q62 43 66 48" stroke="#1E293B" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <ellipse cx="29" cy="51" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.65"/>
+        <ellipse cx="71" cy="51" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.65"/>
+        <path d="M42 52 Q50 64 58 52 Z" fill="#E11D48"/>
+      </g>`
+    ];
+
+    // Animal definitions with dedicated SVG vectors & sounds
+    const ANIMAL_BALLOONS = [
+      {
+        name: 'Teddy Bear',
+        callout: '🐻 Beary Cute! +3',
+        soundType: 'bear',
+        color: '#F59E0B',
+        svg: (w, h, id) => `
+          <svg viewBox="0 0 100 130" width="${w}" height="${h * 1.3}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="${id}" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#FDE68A"/>
+                <stop offset="55%" stop-color="#D97706"/>
+                <stop offset="100%" stop-color="#92400E"/>
+              </radialGradient>
+            </defs>
+            <!-- Bear Ears -->
+            <circle cx="22" cy="26" r="14" fill="url(#${id})" stroke="#92400E" stroke-width="1.5"/>
+            <circle cx="22" cy="26" r="8" fill="#FDE68A"/>
+            <circle cx="78" cy="26" r="14" fill="url(#${id})" stroke="#92400E" stroke-width="1.5"/>
+            <circle cx="78" cy="26" r="8" fill="#FDE68A"/>
+            <!-- Balloon Head Body -->
+            <ellipse cx="50" cy="58" rx="40" ry="46" fill="url(#${id})"/>
+            <!-- Knot & String -->
+            <polygon points="50,104 45,110 55,110" fill="#B45309"/>
+            <path d="M50 110 Q45 118 53 124 T49 130" stroke="#FDE68A" stroke-width="1.8" fill="none" opacity="0.8"/>
+            <!-- Light Gloss Highlight -->
+            <ellipse cx="32" cy="35" rx="10" ry="16" transform="rotate(-28 32 35)" fill="#FFFFFF" opacity="0.35"/>
+            <!-- Muzzle & Face -->
+            <ellipse cx="50" cy="67" rx="16" ry="12" fill="#FEF3C7"/>
+            <ellipse cx="50" cy="63" rx="6" ry="4" fill="#451A03"/>
+            <path d="M50 67 L50 72 M46 72 Q50 76 54 72" stroke="#451A03" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <circle cx="36" cy="52" r="3.5" fill="#451A03"/>
+            <circle cx="37" cy="50" r="1.2" fill="#FFFFFF"/>
+            <circle cx="64" cy="52" r="3.5" fill="#451A03"/>
+            <circle cx="65" cy="50" r="1.2" fill="#FFFFFF"/>
+            <!-- Rosy cheeks -->
+            <ellipse cx="26" cy="62" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+            <ellipse cx="74" cy="62" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+          </svg>
+        `
+      },
+      {
+        name: 'Kitty Cat',
+        callout: '🐱 Meow! +3',
+        soundType: 'meow',
+        color: '#C084FC',
+        svg: (w, h, id) => `
+          <svg viewBox="0 0 100 130" width="${w}" height="${h * 1.3}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="${id}" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#E9D5FF"/>
+                <stop offset="60%" stop-color="#A855F7"/>
+                <stop offset="100%" stop-color="#6B21A8"/>
+              </radialGradient>
+            </defs>
+            <!-- Cat Triangular Ears -->
+            <polygon points="14,34 32,12 40,36" fill="url(#${id})" stroke="#6B21A8" stroke-width="1.2"/>
+            <polygon points="18,32 32,18 36,34" fill="#F472B6"/>
+            <polygon points="86,34 68,12 60,36" fill="url(#${id})" stroke="#6B21A8" stroke-width="1.2"/>
+            <polygon points="82,32 68,18 64,34" fill="#F472B6"/>
+            <!-- Head Body -->
+            <ellipse cx="50" cy="58" rx="40" ry="46" fill="url(#${id})"/>
+            <!-- Knot & String -->
+            <polygon points="50,104 45,110 55,110" fill="#7E22CE"/>
+            <path d="M50 110 Q46 118 54 124 T50 130" stroke="#E9D5FF" stroke-width="1.8" fill="none" opacity="0.8"/>
+            <ellipse cx="32" cy="36" rx="9" ry="15" transform="rotate(-28 32 36)" fill="#FFFFFF" opacity="0.35"/>
+            <!-- Eyes & Whiskers -->
+            <ellipse cx="36" cy="53" rx="3.5" ry="4.5" fill="#3B0764"/>
+            <circle cx="37" cy="51" r="1.3" fill="#FFFFFF"/>
+            <ellipse cx="64" cy="53" rx="3.5" ry="4.5" fill="#3B0764"/>
+            <circle cx="65" cy="51" r="1.3" fill="#FFFFFF"/>
+            <polygon points="50,60 46,57 54,57" fill="#F472B6"/>
+            <path d="M46 63 Q50 66 54 63" stroke="#3B0764" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <line x1="20" y1="57" x2="32" y2="59" stroke="#3B0764" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="20" y1="65" x2="32" y2="63" stroke="#3B0764" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="80" y1="57" x2="68" y2="59" stroke="#3B0764" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="80" y1="65" x2="68" y2="63" stroke="#3B0764" stroke-width="1.5" stroke-linecap="round"/>
+            <ellipse cx="28" cy="62" rx="4.5" ry="2.5" fill="#F472B6" opacity="0.7"/>
+            <ellipse cx="72" cy="62" rx="4.5" ry="2.5" fill="#F472B6" opacity="0.7"/>
+          </svg>
+        `
+      },
+      {
+        name: 'Bunny Rabbit',
+        callout: '🐰 Boing! +3',
+        soundType: 'bunny',
+        color: '#F472B6',
+        svg: (w, h, id) => `
+          <svg viewBox="0 0 100 135" width="${w}" height="${h * 1.35}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="${id}" cx="35%" cy="35%" r="70%">
+                <stop offset="0%" stop-color="#FCE7F3"/>
+                <stop offset="60%" stop-color="#F472B6"/>
+                <stop offset="100%" stop-color="#BE185D"/>
+              </radialGradient>
+            </defs>
+            <!-- Long Upright Bunny Ears -->
+            <ellipse cx="32" cy="22" rx="9" ry="24" transform="rotate(-10 32 22)" fill="url(#${id})" stroke="#BE185D" stroke-width="1.2"/>
+            <ellipse cx="32" cy="22" rx="4.5" ry="17" transform="rotate(-10 32 22)" fill="#FDA4AF"/>
+            <ellipse cx="68" cy="22" rx="9" ry="24" transform="rotate(10 68 22)" fill="url(#${id})" stroke="#BE185D" stroke-width="1.2"/>
+            <ellipse cx="68" cy="22" rx="4.5" ry="17" transform="rotate(10 68 22)" fill="#FDA4AF"/>
+            <!-- Balloon Head -->
+            <ellipse cx="50" cy="65" rx="39" ry="43" fill="url(#${id})"/>
+            <polygon points="50,108 45,114 55,114" fill="#BE185D"/>
+            <path d="M50 114 Q46 122 54 128 T50 135" stroke="#FCE7F3" stroke-width="1.8" fill="none" opacity="0.8"/>
+            <ellipse cx="32" cy="45" rx="8" ry="14" transform="rotate(-28 32 45)" fill="#FFFFFF" opacity="0.4"/>
+            <!-- Bunny Face & Buck Teeth -->
+            <ellipse cx="36" cy="62" rx="3.5" ry="4.5" fill="#831843"/>
+            <circle cx="37" cy="60" r="1.3" fill="#FFFFFF"/>
+            <ellipse cx="64" cy="62" rx="3.5" ry="4.5" fill="#831843"/>
+            <circle cx="65" cy="60" r="1.3" fill="#FFFFFF"/>
+            <ellipse cx="50" cy="69" rx="3.5" ry="2.5" fill="#BE185D"/>
+            <path d="M46 72 Q50 76 54 72" stroke="#831843" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+            <rect x="48" y="73" width="4" height="4" fill="#FFFFFF" rx="1"/>
+            <ellipse cx="27" cy="69" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.75"/>
+            <ellipse cx="73" cy="69" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.75"/>
+          </svg>
+        `
+      },
+      {
+        name: 'Froggy',
+        callout: '🐸 Ribbit! +3',
+        soundType: 'ribbit',
+        color: '#4ADE80',
+        svg: (w, h, id) => `
+          <svg viewBox="0 0 100 130" width="${w}" height="${h * 1.3}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="${id}" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#BBF7D0"/>
+                <stop offset="60%" stop-color="#22C55E"/>
+                <stop offset="100%" stop-color="#15803D"/>
+              </radialGradient>
+            </defs>
+            <!-- Big Bulbous Frog Eyes -->
+            <circle cx="26" cy="25" r="14" fill="url(#${id})" stroke="#15803D" stroke-width="1.2"/>
+            <circle cx="26" cy="24" r="8" fill="#FFFFFF"/>
+            <circle cx="27" cy="24" r="4.5" fill="#052E16"/>
+            <circle cx="29" cy="22" r="1.5" fill="#FFFFFF"/>
+            <circle cx="74" cy="25" r="14" fill="url(#${id})" stroke="#15803D" stroke-width="1.2"/>
+            <circle cx="74" cy="24" r="8" fill="#FFFFFF"/>
+            <circle cx="73" cy="24" r="4.5" fill="#052E16"/>
+            <circle cx="75" cy="22" r="1.5" fill="#FFFFFF"/>
+            <!-- Body -->
+            <ellipse cx="50" cy="58" rx="41" ry="46" fill="url(#${id})"/>
+            <polygon points="50,104 45,110 55,110" fill="#15803D"/>
+            <path d="M50 110 Q45 118 53 124 T49 130" stroke="#BBF7D0" stroke-width="1.8" fill="none" opacity="0.8"/>
+            <ellipse cx="32" cy="40" rx="9" ry="14" transform="rotate(-28 32 40)" fill="#FFFFFF" opacity="0.35"/>
+            <!-- Nostrils & Froggy Grin -->
+            <circle cx="46" cy="56" r="1.5" fill="#052E16"/>
+            <circle cx="54" cy="56" r="1.5" fill="#052E16"/>
+            <path d="M34 65 Q50 78 66 65" stroke="#052E16" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <ellipse cx="28" cy="64" rx="4" ry="2.5" fill="#FB7185" opacity="0.7"/>
+            <ellipse cx="72" cy="64" rx="4" ry="2.5" fill="#FB7185" opacity="0.7"/>
+          </svg>
+        `
+      },
+      {
+        name: 'Puppy Dog',
+        callout: '🐶 Woof! +3',
+        soundType: 'woof',
+        color: '#FB923C',
+        svg: (w, h, id) => `
+          <svg viewBox="0 0 100 130" width="${w}" height="${h * 1.3}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="${id}" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#FED7AA"/>
+                <stop offset="60%" stop-color="#F97316"/>
+                <stop offset="100%" stop-color="#9A3412"/>
+              </radialGradient>
+            </defs>
+            <!-- Drooping Puppy Ears -->
+            <ellipse cx="14" cy="48" rx="9" ry="22" transform="rotate(22 14 48)" fill="#7C2D12"/>
+            <ellipse cx="86" cy="48" rx="9" ry="22" transform="rotate(-22 86 48)" fill="#7C2D12"/>
+            <!-- Head Body -->
+            <ellipse cx="50" cy="58" rx="39" ry="46" fill="url(#${id})"/>
+            <polygon points="50,104 45,110 55,110" fill="#9A3412"/>
+            <path d="M50 110 Q45 118 53 124 T49 130" stroke="#FED7AA" stroke-width="1.8" fill="none" opacity="0.8"/>
+            <ellipse cx="32" cy="36" rx="9" ry="15" transform="rotate(-28 32 36)" fill="#FFFFFF" opacity="0.35"/>
+            <!-- Face & Tongue -->
+            <ellipse cx="36" cy="52" rx="3.5" ry="4.5" fill="#431407"/>
+            <circle cx="37" cy="50" r="1.3" fill="#FFFFFF"/>
+            <ellipse cx="64" cy="52" rx="3.5" ry="4.5" fill="#431407"/>
+            <circle cx="65" cy="50" r="1.3" fill="#FFFFFF"/>
+            <ellipse cx="50" cy="62" rx="5.5" ry="4" fill="#431407"/>
+            <path d="M50 66 L50 71 M44 71 Q50 75 56 71" stroke="#431407" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <path d="M48 72 Q50 81 54 72 Z" fill="#F43F5E"/>
+            <ellipse cx="26" cy="62" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+            <ellipse cx="74" cy="62" rx="4.5" ry="2.5" fill="#FB7185" opacity="0.6"/>
+          </svg>
+        `
+      }
+    ];
+
+    function createStandardBalloonSVG(w, h, palette, faceSvg, isRainbow) {
+      const gradId = 'bg_' + Math.random().toString(36).substr(2, 9);
+      let defs = '';
+      let bodyFill = `url(#${gradId})`;
+
+      if (isRainbow) {
+        defs = `
+          <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF6B6B" />
+            <stop offset="25%" stop-color="#FEE140" />
+            <stop offset="50%" stop-color="#48DBFB" />
+            <stop offset="75%" stop-color="#1DD1A1" />
+            <stop offset="100%" stop-color="#9B59B6" />
+          </linearGradient>
+        `;
+      } else {
+        defs = `
+          <radialGradient id="${gradId}" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="${palette.light}" />
+            <stop offset="65%" stop-color="${palette.main}" />
+            <stop offset="100%" stop-color="${palette.dark}" />
+          </radialGradient>
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 100 130" width="${w}" height="${h * 1.3}" xmlns="http://www.w3.org/2000/svg">
+          <defs>${defs}</defs>
+          <!-- Balloon Oval Body -->
+          <ellipse cx="50" cy="52" rx="42" ry="49" fill="${bodyFill}"/>
+          <!-- Tied Knot -->
+          <polygon points="50,101 44,108 56,108" fill="${isRainbow ? '#E11D48' : palette.dark}"/>
+          <!-- Dangling Wavy String -->
+          <path d="M50 108 Q45 116 53 122 T48 130" stroke="${isRainbow ? '#FDE047' : palette.light}" stroke-width="1.8" fill="none" opacity="0.85"/>
+          <!-- 3D Specular Gloss -->
+          <ellipse cx="32" cy="32" rx="10" ry="18" transform="rotate(-30 32 32)" fill="#FFFFFF" opacity="0.45"/>
+          <!-- Expressive Face -->
+          ${faceSvg}
+        </svg>
+      `;
+    }
+
+    /* =========================================================================
+       BALLOON GAME ENTITY & INTERACTION
+       ========================================================================= */
+    const balloonField = document.getElementById('balloonField');
+    let activeBalloons = [];
+    let score = 0;
+    let comboStreak = 0;
+    let lastPopTime = 0;
+
+    // Speed multiplier state: Slow = 0.55, Normal = 1.0, Fast = 1.6
+    let currentSpeedMult = 0.55;
+
+    class Balloon {
+      constructor(custom = {}) {
+        // 30% chance for an animal balloon, 10% for rainbow, rest standard face balloons
+        const isAnimal = custom.animal !== undefined
+          ? custom.animal
+          : (!custom.rainbow && Math.random() < 0.30);
+
+        const isRainbow = !isAnimal && (custom.rainbow || Math.random() < 0.10);
+
+        this.isAnimal = isAnimal;
+        this.isRainbow = isRainbow;
+        this.popped = false;
+
+        // Balloon dimensions
+        const baseWidth = Math.floor(Math.min(width * 0.22, 90 + Math.random() * 25));
+        this.width = Math.max(75, baseWidth);
+        this.height = this.width * 1.15;
+
+        // Color & graphics
+        if (this.isAnimal) {
+          this.animalConfig = custom.animalConfig || ANIMAL_BALLOONS[Math.floor(Math.random() * ANIMAL_BALLOONS.length)];
+          this.color = this.animalConfig.color;
+        } else {
+          this.palette = BALLOON_PALETTES[Math.floor(Math.random() * BALLOON_PALETTES.length)];
+          this.faceSvg = EMOJI_FACES[Math.floor(Math.random() * EMOJI_FACES.length)];
+          this.color = this.palette.main;
+        }
+
+        // Horizontal position & drift
+        const padding = 20;
+        this.x = padding + Math.random() * Math.max(10, width - this.width - padding * 2);
+        this.y = height + (custom.offsetY || Math.random() * 30);
+
+        // Speeds
+        const speedRandom = 0.85 + Math.random() * 0.6;
+        this.baseVelocity = speedRandom;
+
+        // Gentle horizontal pendulum sway
+        this.swayAmp = 14 + Math.random() * 18;
+        this.swayFreq = 0.018 + Math.random() * 0.015;
+        this.swayPhase = Math.random() * Math.PI * 2;
+        this.currentSway = 0;
+
+        // DOM node creation
+        this.el = document.createElement('div');
+        this.el.className = 'balloon-node';
+        this.el.style.width = `${this.width}px`;
+        this.el.style.height = `${this.height * 1.3}px`;
+
+        if (this.isAnimal) {
+          const gradId = 'an_bg_' + Math.random().toString(36).substr(2, 9);
+          this.el.innerHTML = this.animalConfig.svg(this.width, this.height, gradId);
+        } else {
+          this.el.innerHTML = createStandardBalloonSVG(this.width, this.height, this.palette, this.faceSvg, this.isRainbow);
+        }
+
+        // Touch & Click pop listener with passive: false to prevent scrolling delay
+        const onPop = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.pop();
+        };
+
+        this.el.addEventListener('pointerdown', onPop, { passive: false });
+        balloonField.appendChild(this.el);
+        this.renderPosition();
+      }
+
+      renderPosition() {
+        this.currentSway = Math.sin(this.swayPhase) * this.swayAmp;
+        const tilt = (this.currentSway / this.swayAmp) * 4.5;
+        this.el.style.transform = `translate3d(${this.x + this.currentSway}px, ${this.y}px, 0) rotate(${tilt}deg)`;
+      }
+
+      tick() {
+        if (this.popped) return false;
+
+        this.y -= this.baseVelocity * currentSpeedMult * 2.2;
+        this.swayPhase += this.swayFreq;
+        this.renderPosition();
+
+        // Remove when floating past top of screen
+        if (this.y < -(this.height * 1.4)) {
+          this.remove();
+          return false;
+        }
+        return true;
+      }
+
+      pop() {
+        if (this.popped) return;
+        this.popped = true;
+
+        const centerX = this.x + this.currentSway + this.width / 2;
+        const centerY = this.y + (this.height * 0.45);
+
+        if (this.isAnimal) {
+          sound.playAnimalChirp(this.animalConfig.soundType);
+          createExplosion(centerX, centerY, this.color, false, true);
+          addScore(3, centerX, centerY, this.animalConfig.callout);
+        } else if (this.isRainbow) {
+          sound.playMagicChime();
+          createExplosion(centerX, centerY, this.color, true, false);
+          addScore(5, centerX, centerY, '⭐ Rainbow Magic! +5');
+        } else {
+          sound.playPop(360 + Math.random() * 200);
+          createExplosion(centerX, centerY, this.color, false, false);
+          addScore(1, centerX, centerY, '+1');
+        }
+
+        // Quick pop burst scale & fade
+        this.el.style.transform = `translate3d(${this.x + this.currentSway}px, ${this.y}px, 0) scale(1.35)`;
+        this.el.style.opacity = '0';
+        setTimeout(() => this.remove(), 90);
+      }
+
+      remove() {
+        if (this.el && this.el.parentNode) {
+          this.el.parentNode.removeChild(this.el);
+        }
+      }
+    }
+
+    /* =========================================================================
+       SCORE, STREAK & PRAISE SYSTEM
+       ========================================================================= */
+    const scoreText = document.getElementById('scoreText');
+    const streakBadge = document.getElementById('streakBadge');
+    const streakCount = document.getElementById('streakCount');
+    const praiseBanner = document.getElementById('praiseBanner');
+
+    const PRAISES = ['🌟 Awesome!', '🎉 Super Pop!', '🎈 Brilliant!', '💖 Great Job!', '✨ Magical!'];
+
+    function addScore(points, x, y, tagText) {
+      const now = Date.now();
+      if (now - lastPopTime < 1300) {
+        comboStreak++;
+      } else {
+        comboStreak = 1;
+      }
+      lastPopTime = now;
+
+      score += points;
+      scoreText.textContent = score;
+
+      // Animate score counter
+      scoreText.style.transform = 'scale(1.3)';
+      setTimeout(() => {
+        scoreText.style.transform = 'scale(1)';
+      }, 150);
+
+      // Streak badge
+      if (comboStreak >= 3) {
+        streakBadge.classList.remove('hidden');
+        streakBadge.classList.add('flex');
+        streakCount.textContent = `x${comboStreak}`;
+      }
+
+      // Floating pop text tag
+      createFloatingTag(x, y, tagText);
+
+      // Trigger celebratory fanfare every 10 pops or combos
+      if (comboStreak > 0 && comboStreak % 6 === 0) {
+        sound.playCelebration();
+        triggerPraise();
+      }
+    }
+
+    function createFloatingTag(x, y, text) {
+      const tag = document.createElement('div');
+      tag.className = 'pop-tag text-lg sm:text-2xl text-amber-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]';
+      tag.textContent = text;
+      tag.style.left = `${x}px`;
+      tag.style.top = `${y}px`;
+      document.body.appendChild(tag);
+      setTimeout(() => {
+        if (tag.parentNode) tag.parentNode.removeChild(tag);
+      }, 900);
+    }
+
+    function triggerPraise() {
+      const randomWord = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+      praiseBanner.firstElementChild.textContent = randomWord;
+      praiseBanner.classList.add('show');
+      setTimeout(() => {
+        praiseBanner.classList.remove('show');
+      }, 1100);
+    }
+
+    /* =========================================================================
+       GAME LOOP & SPAWN MANAGER
+       ========================================================================= */
+    let lastSpawnTime = 0;
+    let spawnInterval = 1400; // ms
+
+    const btnSlow = document.getElementById('btnSlow');
+    const btnNorm = document.getElementById('btnNorm');
+    const btnFast = document.getElementById('btnFast');
+
+    function setSpeedMode(mode) {
+      [btnSlow, btnNorm, btnFast].forEach(btn => {
+        btn.className = 'px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white';
+      });
+
+      if (mode === 'slow') {
+        currentSpeedMult = 0.55;
+        spawnInterval = 1700;
+        btnSlow.className = 'px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all bg-emerald-500 text-slate-950 shadow';
+      } else if (mode === 'norm') {
+        currentSpeedMult = 1.0;
+        spawnInterval = 1100;
+        btnNorm.className = 'px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all bg-blue-500 text-white shadow';
+      } else if (mode === 'fast') {
+        currentSpeedMult = 1.6;
+        spawnInterval = 750;
+        btnFast.className = 'px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold transition-all bg-rose-500 text-white shadow';
+      }
+    }
+
+    btnSlow.addEventListener('click', () => setSpeedMode('slow'));
+    btnNorm.addEventListener('click', () => setSpeedMode('norm'));
+    btnFast.addEventListener('click', () => setSpeedMode('fast'));
+
+    // Audio mute button
+    const audioBtn = document.getElementById('audioBtn');
+    const audioIcon = document.getElementById('audioIcon');
+    audioBtn.addEventListener('click', () => {
+      sound.muted = !sound.muted;
+      audioIcon.textContent = sound.muted ? '🔇' : '🔊';
+      if (!sound.muted) sound.playPop(500);
+    });
+
+    // Main animation loop
+    function gameLoop(time) {
+      drawNightSky();
+      updateAndDrawParticles();
+
+      // Random shooting star
+      if (Math.random() < 0.0035) {
+        spawnShootingStar();
+      }
+
+      // Check combo timeout
+      if (Date.now() - lastPopTime > 2200 && comboStreak > 0) {
+        comboStreak = 0;
+        streakBadge.classList.add('hidden');
+        streakBadge.classList.remove('flex');
+      }
+
+      // Spawn balloons
+      if (time - lastSpawnTime > spawnInterval) {
+        if (activeBalloons.length < 18) {
+          activeBalloons.push(new Balloon());
+        }
+        lastSpawnTime = time;
+      }
+
+      // Update balloon physics
+      for (let i = activeBalloons.length - 1; i >= 0; i--) {
+        const stillAlive = activeBalloons[i].tick();
+        if (!stillAlive) {
+          activeBalloons.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /* =========================================================================
+       CLEAN SELF-CONTAINED PWA SETUP (MANIFEST & SERVICE WORKER)
+       ========================================================================= */
+    function setupPWA() {
+      try {
+        // Create 192x192 App Icon on offscreen canvas
+        const iconCanvas = document.createElement('canvas');
+        iconCanvas.width = 192;
+        iconCanvas.height = 192;
+        const ictx = iconCanvas.getContext('2d');
+
+        // Draw icon background
+        ictx.fillStyle = '#0F172A';
+        ictx.fillRect(0, 0, 192, 192);
+
+        // Draw icon moon & balloon
+        ictx.fillStyle = '#FDE68A';
+        ictx.beginPath();
+        ictx.arc(140, 50, 24, 0, Math.PI * 2);
+        ictx.fill();
+
+        ictx.fillStyle = '#F43F5E';
+        ictx.beginPath();
+        ictx.ellipse(90, 105, 42, 52, 0, 0, Math.PI * 2);
+        ictx.fill();
+
+        const iconUrl = iconCanvas.toDataURL('image/png');
+
+        // Generate dynamic manifest
+        const manifest = {
+          name: "Magical Balloon Pop Night",
+          short_name: "BalloonPop",
+          start_url: window.location.href,
+          display: "standalone",
+          background_color: "#030712",
+          theme_color: "#030712",
+          orientation: "portrait",
+          icons: [
+            { src: iconUrl, sizes: "192x192", type: "image/png" }
+          ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+
+        // Register Service Worker for offline PWA installation
+        if ('serviceWorker' in navigator) {
+          const swCode = `
+            self.addEventListener('install', (e) => self.skipWaiting());
+            self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+            self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
+          `;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          const swUrl = URL.createObjectURL(swBlob);
+          navigator.serviceWorker.register(swUrl).catch(() => {});
+        }
+      } catch (err) {
+        // PWA setup fallthrough
+      }
+    }
+
+    // Android PWA install prompt handler
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove('hidden');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBtn.classList.add('hidden');
+        }
+        deferredPrompt = null;
+      }
+    });
+
+    /* =========================================================================
+       INITIALIZATION
+       ========================================================================= */
+    window.onload = () => {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Pre-spawn friendly starter balloons
+      for (let i = 0; i < 5; i++) {
+        const starter = new Balloon({
+          animal: (i % 2 === 1)
+        });
+        starter.y = (height * 0.4) + (i * 75);
+        starter.renderPosition();
+        activeBalloons.push(starter);
+      }
+
+      setupPWA();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>

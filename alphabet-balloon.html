@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#120c2e">
+  <title>Alphabet Foil Balloon Pop! 🎈🔤</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: none;
+      font-family: 'Fredoka One', 'Quicksand', cursive, sans-serif;
+      background: #0f0a28;
+      background: linear-gradient(180deg, #08041a 0%, #160d38 42%, #28114d 75%, #3d155e 100%);
+      color: #fff;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #bg-canvas, #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #bg-canvas {
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #game-canvas {
+      z-index: 5;
+      touch-action: none;
+      cursor: pointer;
+    }
+
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+    }
+
+    .header-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: max(env(safe-area-inset-top, 10px), 10px) 14px 8px 14px;
+      pointer-events: auto;
+      gap: 8px;
+    }
+
+    .star-counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      font-size: clamp(1.1rem, 3.4vw, 1.45rem);
+      color: #fff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .star-counter .star-icon {
+      font-size: 1.3em;
+      filter: drop-shadow(0 0 8px #ffea00);
+      display: inline-block;
+      animation: float-star 2.4s ease-in-out infinite;
+    }
+
+    @keyframes float-star {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.18) rotate(14deg); }
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn-action {
+      border: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.16);
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      color: #fff;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-family: inherit;
+      font-size: clamp(0.9rem, 2.6vw, 1.1rem);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
+      min-height: 42px;
+      min-width: 42px;
+    }
+
+    .btn-action:active {
+      transform: scale(0.92);
+    }
+
+    .btn-action.active {
+      background: linear-gradient(135deg, #ff007f, #ff758c);
+      border-color: #fff;
+      box-shadow: 0 0 14px rgba(255, 0, 127, 0.65);
+    }
+
+    .speed-selector {
+      display: flex;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 999px;
+      padding: 3px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      gap: 2px;
+    }
+
+    .speed-btn {
+      padding: 4px 10px;
+      font-size: clamp(0.95rem, 2.6vw, 1.15rem);
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.65);
+      transition: all 0.2s ease;
+    }
+
+    .speed-btn.selected {
+      background: linear-gradient(135deg, #4ade80, #16a34a);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.65);
+      transform: scale(1.06);
+    }
+
+    .footer-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      padding: 6px 12px max(env(safe-area-inset-bottom, 8px), 8px) 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    .tray-shelf {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 8px 16px;
+      border-radius: 24px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .tray-shelf::-webkit-scrollbar {
+      display: none;
+    }
+
+    .letter-slot {
+      flex: 0 0 auto;
+      width: clamp(36px, 7.8vw, 44px);
+      height: clamp(36px, 7.8vw, 44px);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.1rem, 3.4vw, 1.35rem);
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .letter-slot.collected {
+      color: #fff;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      border: 2px solid #fff;
+      box-shadow: 0 4px 15px rgba(255, 65, 108, 0.65);
+      transform: scale(1.1);
+    }
+
+    .phonics-banner {
+      position: absolute;
+      top: 16%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      z-index: 35;
+      pointer-events: none;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 28px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45), 0 0 35px rgba(255, 215, 0, 0.7);
+      border: 4px solid #ffd700;
+      transition: opacity 0.2s, transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90vw;
+    }
+
+    .phonics-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    .banner-emoji {
+      font-size: clamp(2.4rem, 7.5vw, 3.2rem);
+    }
+
+    .banner-text-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .banner-letter {
+      font-size: clamp(2rem, 6vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1;
+      color: #ff007f;
+    }
+
+    .banner-word {
+      font-size: clamp(1.15rem, 3.6vw, 1.45rem);
+      font-weight: 800;
+      color: #3b28cc;
+    }
+
+    #splash-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      background: radial-gradient(circle, rgba(29, 14, 58, 0.9) 0%, rgba(11, 6, 28, 0.98) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    #splash-modal.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .start-circle-btn {
+      width: clamp(120px, 28vw, 155px);
+      height: clamp(120px, 28vw, 155px);
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff007f, #8b5cf6);
+      border: 5px solid #fff;
+      box-shadow: 0 12px 35px rgba(255, 0, 127, 0.6), inset 0 4px 8px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(3.2rem, 9vw, 4.4rem);
+      animation: pulse-balloon 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse-balloon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); box-shadow: 0 16px 45px rgba(255, 0, 127, 0.85); }
+    }
+
+    .splash-title {
+      font-size: clamp(1.9rem, 6.2vw, 2.8rem);
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 4px 15px rgba(255, 105, 180, 0.7);
+    }
+
+    .splash-desc {
+      font-size: clamp(1rem, 3.4vw, 1.3rem);
+      color: #ffe082;
+      text-align: center;
+      max-width: 82%;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="game-canvas"></canvas>
+
+    <header class="header-bar">
+      <div class="star-counter glass-pill" title="Stars Collected">
+        <span class="star-icon">⭐</span>
+        <span id="score-counter">0</span>
+      </div>
+
+      <div class="controls-group">
+        <div class="speed-selector" id="speed-selector" title="Speed Settings">
+          <button class="speed-btn" data-speed="slow" aria-label="Slow mode">🐢</button>
+          <button class="speed-btn selected" data-speed="normal" aria-label="Normal mode">🐰</button>
+          <button class="speed-btn" data-speed="fast" aria-label="Fast mode">🐆</button>
+        </div>
+
+        <button id="btn-spawn" class="btn-action glass-pill" title="Spawn Balloon Immediately" aria-label="Spawn Balloon">
+          <span>➕🎈</span>
+        </button>
+
+        <button id="btn-sound" class="btn-action glass-pill active" title="Toggle Sound FX" aria-label="Sound FX">
+          <span id="sound-icon">🔔</span>
+        </button>
+
+        <button id="btn-speech" class="btn-action glass-pill active" title="Toggle Phonics Voice" aria-label="Voice Phonics">
+          <span id="speech-icon">🗣️</span>
+        </button>
+
+        <button id="btn-order" class="btn-action glass-pill" title="Toggle A-Z In Order vs Shuffle" aria-label="A-Z Order">
+          <span id="order-icon">🔤</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="phonics-banner" class="phonics-banner">
+      <div id="banner-emoji" class="banner-emoji">🍎</div>
+      <div class="banner-text-col">
+        <div id="banner-letter" class="banner-letter">A</div>
+        <div id="banner-word" class="banner-word">is for Apple!</div>
+      </div>
+    </div>
+
+    <footer class="footer-bar">
+      <div class="tray-shelf glass-pill" id="alphabet-shelf"></div>
+    </footer>
+
+    <div id="splash-modal">
+      <div class="start-circle-btn">🎈</div>
+      <h1 class="splash-title">Alphabet Balloon Pop!</h1>
+      <p class="splash-desc">Pop super clear, shiny white foil letters with colorful outer glows from A to Z!</p>
+    </div>
+  </div>
+
+  <script>
+    const PHONICS_DATA = {
+      'A': { word: 'Apple', emoji: '🍎', glowColor: '#ff2a55', lightColor: '#ff708d', darkColor: '#a10023', hue: 345, noteFreq: 261.63 },
+      'B': { word: 'Ball', emoji: '⚽', glowColor: '#00b4d8', lightColor: '#68d8d6', darkColor: '#005f73', hue: 190, noteFreq: 277.18 },
+      'C': { word: 'Cat', emoji: '🐱', glowColor: '#ff9f1c', lightColor: '#ffd166', darkColor: '#bc5b00', hue: 35, noteFreq: 293.66 },
+      'D': { word: 'Dog', emoji: '🐶', glowColor: '#2ec4b6', lightColor: '#70e000', darkColor: '#0b525b', hue: 174, noteFreq: 311.13 },
+      'E': { word: 'Elephant', emoji: '🐘', glowColor: '#9d4edd', lightColor: '#c77dff', darkColor: '#5a189a', hue: 275, noteFreq: 329.63 },
+      'F': { word: 'Fish', emoji: '🐟', glowColor: '#38b000', lightColor: '#70e000', darkColor: '#004b23', hue: 100, noteFreq: 349.23 },
+      'G': { word: 'Giraffe', emoji: '🦒', glowColor: '#f77f00', lightColor: '#fcbf49', darkColor: '#a14800', hue: 30, noteFreq: 369.99 },
+      'H': { word: 'Heart', emoji: '💖', glowColor: '#ff007f', lightColor: '#ff80bf', darkColor: '#99004d', hue: 330, noteFreq: 392.00 },
+      'I': { word: 'Ice Cream', emoji: '🍦', glowColor: '#00f5d4', lightColor: '#80ffea', darkColor: '#007a6a', hue: 172, noteFreq: 415.30 },
+      'J': { word: 'Jellyfish', emoji: '🪼', glowColor: '#7209b7', lightColor: '#b5179e', darkColor: '#3c096c', hue: 276, noteFreq: 440.00 },
+      'K': { word: 'Kite', emoji: '🪁', glowColor: '#4361ee', lightColor: '#7b92ff', darkColor: '#1d2a85', hue: 228, noteFreq: 466.16 },
+      'L': { word: 'Lion', emoji: '🦁', glowColor: '#ffb703', lightColor: '#ffe082', darkColor: '#b57900', hue: 45, noteFreq: 493.88 },
+      'M': { word: 'Monkey', emoji: '🐵', glowColor: '#e05780', lightColor: '#ff9ebb', darkColor: '#8f1d41', hue: 342, noteFreq: 523.25 },
+      'N': { word: 'Nest', emoji: '🪺', glowColor: '#06d6a0', lightColor: '#80ffdb', darkColor: '#00664d', hue: 164, noteFreq: 554.37 },
+      'O': { word: 'Owl', emoji: '🦉', glowColor: '#f3722c', lightColor: '#f8961e', darkColor: '#8e3305', hue: 21, noteFreq: 587.33 },
+      'P': { word: 'Penguin', emoji: '🐧', glowColor: '#4cc9f0', lightColor: '#a6e8fa', darkColor: '#076f94', hue: 194, noteFreq: 622.25 },
+      'Q': { word: 'Queen', emoji: '👑', glowColor: '#c77dff', lightColor: '#e0aaff', darkColor: '#65239e', hue: 278, noteFreq: 659.25 },
+      'R': { word: 'Rainbow', emoji: '🌈', glowColor: '#ff0a54', lightColor: '#ff758f', darkColor: '#800020', hue: 342, noteFreq: 698.46 },
+      'S': { word: 'Star', emoji: '⭐', glowColor: '#ffd166', lightColor: '#fff0a6', darkColor: '#c99200', hue: 42, noteFreq: 739.99 },
+      'T': { word: 'Tiger', emoji: '🐯', glowColor: '#fb8500', lightColor: '#ffb703', darkColor: '#964800', hue: 32, noteFreq: 783.99 },
+      'U': { word: 'Umbrella', emoji: '☂️', glowColor: '#8338ec', lightColor: '#b780ff', darkColor: '#47148a', hue: 268, noteFreq: 830.61 },
+      'V': { word: 'Violin', emoji: '🎻', glowColor: '#e76f51', lightColor: '#f4a261', darkColor: '#91311a', hue: 12, noteFreq: 880.00 },
+      'W': { word: 'Whale', emoji: '🐳', glowColor: '#0077b6', lightColor: '#48cae4', darkColor: '#003a5c', hue: 201, noteFreq: 932.33 },
+      'X': { word: 'Xylophone', emoji: '🎵', glowColor: '#d90429', lightColor: '#ef233c', darkColor: '#6c0114', hue: 349, noteFreq: 987.77 },
+      'Y': { word: 'Yo-yo', emoji: '🪀', glowColor: '#52b788', lightColor: '#95d5b2', darkColor: '#23593f', hue: 153, noteFreq: 1046.50 },
+      'Z': { word: 'Zebra', emoji: '🦓', glowColor: '#3a0ca3', lightColor: '#6f42c1', darkColor: '#1c0356', hue: 258, noteFreq: 1108.73 }
+    };
+
+    const ALPHABET_LIST = Object.keys(PHONICS_DATA);
+
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const gameCanvas = document.getElementById('game-canvas');
+    const ctx = gameCanvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resizeAll() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      bgCanvas.width = width * dpr;
+      bgCanvas.height = height * dpr;
+      bgCanvas.style.width = width + 'px';
+      bgCanvas.style.height = height + 'px';
+      bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+      bgCtx.scale(dpr, dpr);
+
+      gameCanvas.width = width * dpr;
+      gameCanvas.height = height * dpr;
+      gameCanvas.style.width = width + 'px';
+      gameCanvas.style.height = height + 'px';
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resizeAll);
+    resizeAll();
+
+    let audioCtx = null;
+    let isSoundEnabled = true;
+    let isSpeechEnabled = true;
+    let isSequentialMode = false;
+    let nextLetterIndex = 0;
+    let score = 0;
+    const collectedLetters = new Set();
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playPopAudio(hue = 300) {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const baseFreq = 260 + (hue % 180) * 1.5;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseFreq * 2.8, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.35, now + 0.12);
+
+        gain.gain.setValueAtTime(0.85, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+
+        const snap = audioCtx.createOscillator();
+        const snapGain = audioCtx.createGain();
+        snap.type = 'sine';
+        snap.frequency.setValueAtTime(920, now);
+        snap.frequency.exponentialRampToValueAtTime(80, now + 0.05);
+
+        snapGain.gain.setValueAtTime(0.55, now);
+        snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        snap.connect(snapGain);
+        snapGain.connect(audioCtx.destination);
+        snap.start(now);
+        snap.stop(now + 0.05);
+      } catch (err) {}
+    }
+
+    function playArpeggioChime(freq = 440) {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const arpeggio = [freq, freq * 1.25, freq * 1.5];
+        arpeggio.forEach((note, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const time = now + idx * 0.05;
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(note, time);
+
+          gain.gain.setValueAtTime(0, time);
+          gain.gain.linearRampToValueAtTime(0.22, time + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.32);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(time);
+          osc.stop(time + 0.35);
+        });
+      } catch (err) {}
+    }
+
+    function playFanfareCelebration() {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const chords = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        chords.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const t = now + i * 0.08;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, t);
+          gain.gain.setValueAtTime(0.3, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 0.65);
+        });
+      } catch (e) {}
+    }
+
+    let voiceList = [];
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        voiceList = window.speechSynthesis.getVoices();
+      }
+    }
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function speakPhonics(letterKey) {
+      if (!isSpeechEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const data = PHONICS_DATA[letterKey];
+        const phrase = `${letterKey}! ${letterKey} is for ${data.word}!`;
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.rate = 0.86;
+        utterance.pitch = 1.25;
+
+        if (voiceList.length > 0) {
+          const preferred = voiceList.find(v => 
+            v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Karen'))
+          ) || voiceList.find(v => v.lang.startsWith('en'));
+          if (preferred) utterance.voice = preferred;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {}
+    }
+
+    const alphabetShelf = document.getElementById('alphabet-shelf');
+    ALPHABET_LIST.forEach(l => {
+      const cell = document.createElement('div');
+      cell.className = 'letter-slot';
+      cell.id = `slot-${l}`;
+      cell.textContent = l;
+      alphabetShelf.appendChild(cell);
+    });
+
+    function registerLetterCollected(l) {
+      const isNew = !collectedLetters.has(l);
+      collectedLetters.add(l);
+      const cell = document.getElementById(`slot-${l}`);
+      if (cell && !cell.classList.contains('collected')) {
+        cell.classList.add('collected');
+        cell.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      if (isNew && collectedLetters.size === ALPHABET_LIST.length) {
+        playFanfareCelebration();
+      }
+    }
+
+    const phonicsBanner = document.getElementById('phonics-banner');
+    const bannerEmoji = document.getElementById('banner-emoji');
+    const bannerLetter = document.getElementById('banner-letter');
+    const bannerWord = document.getElementById('banner-word');
+    let bannerTimeout = null;
+
+    function showPhonicsBadge(letterKey) {
+      const data = PHONICS_DATA[letterKey];
+      bannerEmoji.textContent = data.emoji;
+      bannerLetter.textContent = letterKey;
+      bannerLetter.style.color = data.glowColor;
+      bannerWord.textContent = `is for ${data.word}!`;
+      phonicsBanner.style.borderColor = data.glowColor;
+
+      phonicsBanner.classList.add('show');
+      if (bannerTimeout) clearTimeout(bannerTimeout);
+      bannerTimeout = setTimeout(() => {
+        phonicsBanner.classList.remove('show');
+      }, 1800);
+    }
+
+    const stars = [];
+    const clouds = [];
+    let shootingStar = null;
+
+    for (let i = 0; i < 75; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height * 0.75,
+        radius: Math.random() * 2 + 0.8,
+        twinkleSpeed: Math.random() * 0.03 + 0.015,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    for (let i = 0; i < 4; i++) {
+      clouds.push({
+        x: Math.random() * width,
+        y: 40 + Math.random() * (height * 0.35),
+        speed: 0.15 + Math.random() * 0.25,
+        size: 55 + Math.random() * 45,
+        alpha: 0.12 + Math.random() * 0.1
+      });
+    }
+
+    function checkShootingStar() {
+      if (shootingStar || Math.random() > 0.012) return;
+      shootingStar = {
+        x: Math.random() * width * 0.75,
+        y: Math.random() * height * 0.3,
+        len: 120 + Math.random() * 80,
+        speed: 12 + Math.random() * 8,
+        alpha: 1,
+        angle: Math.PI / 4 + (Math.random() - 0.5) * 0.2
+      };
+    }
+
+    function drawBackdrop() {
+      bgCtx.clearRect(0, 0, width, height);
+
+      const moonX = width - 65;
+      const moonY = 85;
+      const moonR = Math.min(38, width * 0.08);
+
+      const glow = bgCtx.createRadialGradient(moonX, moonY, 10, moonX, moonY, moonR * 2.8);
+      glow.addColorStop(0, 'rgba(255, 248, 220, 0.45)');
+      glow.addColorStop(0.5, 'rgba(255, 235, 170, 0.12)');
+      glow.addColorStop(1, 'rgba(255, 235, 170, 0)');
+      bgCtx.fillStyle = glow;
+      bgCtx.beginPath();
+      bgCtx.arc(moonX, moonY, moonR * 2.8, 0, Math.PI * 2);
+      bgCtx.fill();
+
+      bgCtx.save();
+      bgCtx.fillStyle = '#fff9db';
+      bgCtx.shadowColor = '#ffeaa7';
+      bgCtx.shadowBlur = 18;
+      bgCtx.beginPath();
+      bgCtx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      bgCtx.fill();
+
+      bgCtx.globalCompositeOperation = 'destination-out';
+      bgCtx.beginPath();
+      bgCtx.arc(moonX - moonR * 0.5, moonY - moonR * 0.35, moonR * 0.9, 0, Math.PI * 2);
+      bgCtx.fill();
+      bgCtx.restore();
+
+      stars.forEach(st => {
+        st.phase += st.twinkleSpeed;
+        const currentAlpha = 0.5 + 0.5 * Math.sin(st.phase);
+        bgCtx.fillStyle = `rgba(255, 255, 255, ${currentAlpha})`;
+        bgCtx.beginPath();
+        bgCtx.arc(st.x, st.y, st.radius, 0, Math.PI * 2);
+        bgCtx.fill();
+      });
+
+      clouds.forEach(c => {
+        c.x += c.speed;
+        if (c.x - c.size * 2 > width) c.x = -c.size * 2;
+
+        bgCtx.fillStyle = `rgba(255, 255, 255, ${c.alpha})`;
+        bgCtx.beginPath();
+        bgCtx.arc(c.x, c.y, c.size * 0.55, 0, Math.PI * 2);
+        bgCtx.arc(c.x + c.size * 0.45, c.y - c.size * 0.25, c.size * 0.65, 0, Math.PI * 2);
+        bgCtx.arc(c.x + c.size * 0.95, c.y, c.size * 0.5, 0, Math.PI * 2);
+        bgCtx.fill();
+      });
+
+      checkShootingStar();
+      if (shootingStar) {
+        shootingStar.x += Math.cos(shootingStar.angle) * shootingStar.speed;
+        shootingStar.y += Math.sin(shootingStar.angle) * shootingStar.speed;
+        shootingStar.alpha -= 0.025;
+
+        bgCtx.save();
+        bgCtx.strokeStyle = `rgba(255, 255, 240, ${shootingStar.alpha})`;
+        bgCtx.lineWidth = 2.5;
+        bgCtx.beginPath();
+        bgCtx.moveTo(shootingStar.x, shootingStar.y);
+        bgCtx.lineTo(
+          shootingStar.x - Math.cos(shootingStar.angle) * shootingStar.len * shootingStar.alpha,
+          shootingStar.y - Math.sin(shootingStar.angle) * shootingStar.len * shootingStar.alpha
+        );
+        bgCtx.stroke();
+        bgCtx.restore();
+
+        if (shootingStar.alpha <= 0) shootingStar = null;
+      }
+    }
+
+    function traceWideAlphabetPath(c, letter, S) {
+      c.beginPath();
+      switch (letter) {
+        case 'A':
+          // Open apex with generous triangular window
+          c.moveTo(-S * 0.36, S * 0.52);
+          c.lineTo(-S * 0.02, -S * 0.50);
+          c.lineTo(S * 0.36, S * 0.52);
+          c.moveTo(-S * 0.25, S * 0.12);
+          c.lineTo(S * 0.25, S * 0.12);
+          break;
+
+        case 'B':
+          // Vertical spine with two spacious round lobes
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.arc(0, -S * 0.25, S * 0.25, -Math.PI * 0.5, Math.PI * 0.5);
+          c.lineTo(-S * 0.28, 0);
+          c.moveTo(-S * 0.28, 0);
+          c.arc(0, S * 0.25, S * 0.26, -Math.PI * 0.5, Math.PI * 0.5);
+          c.lineTo(-S * 0.28, S * 0.50);
+          break;
+
+        case 'C':
+          // Smooth, wide open horseshoe arc
+          c.arc(S * 0.04, 0, S * 0.44, -Math.PI * 0.78, Math.PI * 0.78, true);
+          break;
+
+        case 'D':
+          // Upright column with spacious balloon belly
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.arc(0, 0, S * 0.48, -Math.PI * 0.5, Math.PI * 0.5);
+          c.lineTo(-S * 0.28, S * 0.50);
+          break;
+
+        case 'E':
+          // Vertical post with 3 clearly spaced horizontal bars
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.48);
+          c.lineTo(S * 0.32, -S * 0.48);
+          c.moveTo(-S * 0.28, 0);
+          c.lineTo(S * 0.18, 0);
+          c.moveTo(-S * 0.28, S * 0.48);
+          c.lineTo(S * 0.32, S * 0.48);
+          break;
+
+        case 'F':
+          // Vertical spine and two horizontal bars
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.48);
+          c.lineTo(S * 0.32, -S * 0.48);
+          c.moveTo(-S * 0.28, -S * 0.02);
+          c.lineTo(S * 0.18, -S * 0.02);
+          break;
+
+        case 'G':
+          // Beautifully sculpted, wide-open circular balloon bowl with distinct upright shelf and crossbar
+          c.arc(0, 0, S * 0.45, -Math.PI * 0.75, Math.PI * 0.52, true);
+          c.lineTo(S * 0.34, 0);
+          c.lineTo(S * 0.06, 0);
+          break;
+
+        case 'H':
+          // Two parallel pillars with sturdy central bridge
+          c.moveTo(-S * 0.30, -S * 0.50);
+          c.lineTo(-S * 0.30, S * 0.50);
+          c.moveTo(S * 0.30, -S * 0.50);
+          c.lineTo(S * 0.30, S * 0.50);
+          c.moveTo(-S * 0.30, 0);
+          c.lineTo(S * 0.30, 0);
+          break;
+
+        case 'I':
+          // Bold centered column with wide top and bottom stabilizers
+          c.moveTo(0, -S * 0.48);
+          c.lineTo(0, S * 0.48);
+          c.moveTo(-S * 0.24, -S * 0.48);
+          c.lineTo(S * 0.24, -S * 0.48);
+          c.moveTo(-S * 0.24, S * 0.48);
+          c.lineTo(S * 0.24, S * 0.48);
+          break;
+
+        case 'J':
+          // Straight plunge curving smoothly into toddler hook
+          c.moveTo(S * 0.18, -S * 0.50);
+          c.lineTo(S * 0.18, S * 0.22);
+          c.arc(-S * 0.02, S * 0.22, S * 0.22, 0, Math.PI, false);
+          break;
+
+        case 'K':
+          // Spine with wide angled branches
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(S * 0.30, -S * 0.48);
+          c.lineTo(-S * 0.22, 0);
+          c.lineTo(S * 0.32, S * 0.50);
+          break;
+
+        case 'L':
+          // Tall upright turning into broad base
+          c.moveTo(-S * 0.26, -S * 0.50);
+          c.lineTo(-S * 0.26, S * 0.48);
+          c.lineTo(S * 0.32, S * 0.48);
+          break;
+
+        case 'M':
+          // Wide crown with deep center valley
+          c.moveTo(-S * 0.36, S * 0.50);
+          c.lineTo(-S * 0.36, -S * 0.50);
+          c.lineTo(0, S * 0.14);
+          c.lineTo(S * 0.36, -S * 0.50);
+          c.lineTo(S * 0.36, S * 0.50);
+          break;
+
+        case 'N':
+          // Parallel legs joined by clean diagonal
+          c.moveTo(-S * 0.32, S * 0.50);
+          c.lineTo(-S * 0.32, -S * 0.50);
+          c.lineTo(S * 0.32, S * 0.50);
+          c.lineTo(S * 0.32, -S * 0.50);
+          break;
+
+        case 'O':
+          // Extra-wide hollow balloon ring
+          c.ellipse(0, 0, S * 0.38, S * 0.48, 0, 0, Math.PI * 2);
+          break;
+
+        case 'P':
+          // Pillar with big, open upper balloon lobe
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.arc(0, -S * 0.22, S * 0.27, -Math.PI * 0.5, Math.PI * 0.5);
+          c.lineTo(-S * 0.28, S * 0.06);
+          break;
+
+        case 'Q':
+          // Wide ring with clear protruding kick
+          c.ellipse(0, -S * 0.04, S * 0.36, S * 0.44, 0, 0, Math.PI * 2);
+          c.moveTo(S * 0.10, S * 0.20);
+          c.lineTo(S * 0.36, S * 0.52);
+          break;
+
+        case 'R':
+          // Sturdy vertical, spacious upper loop, and angled right leg
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.lineTo(-S * 0.28, S * 0.50);
+          c.moveTo(-S * 0.28, -S * 0.50);
+          c.arc(0, -S * 0.22, S * 0.26, -Math.PI * 0.5, Math.PI * 0.5);
+          c.lineTo(-S * 0.28, S * 0.04);
+          c.moveTo(S * 0.02, S * 0.04);
+          c.lineTo(S * 0.34, S * 0.50);
+          break;
+
+        case 'S':
+          // Natural, flowing, organic double-serpentine S-curve with wide open upper and lower loops
+          c.moveTo(S * 0.26, -S * 0.36);
+          c.bezierCurveTo(S * 0.26, -S * 0.52, -S * 0.30, -S * 0.52, -S * 0.30, -S * 0.24);
+          c.bezierCurveTo(-S * 0.30, S * 0.06, S * 0.30, -S * 0.06, S * 0.30, S * 0.24);
+          c.bezierCurveTo(S * 0.30, S * 0.52, -S * 0.26, S * 0.52, -S * 0.26, S * 0.36);
+          break;
+
+        case 'T':
+          // Wide lintel beam balanced on center column
+          c.moveTo(-S * 0.36, -S * 0.48);
+          c.lineTo(S * 0.36, -S * 0.48);
+          c.moveTo(0, -S * 0.48);
+          c.lineTo(0, S * 0.50);
+          break;
+
+        case 'U':
+          // Deep wide trough with vertical towers
+          c.moveTo(-S * 0.30, -S * 0.50);
+          c.lineTo(-S * 0.30, S * 0.20);
+          c.arc(0, S * 0.20, S * 0.30, Math.PI, 0, true);
+          c.lineTo(S * 0.30, -S * 0.50);
+          break;
+
+        case 'V':
+          // Broad open chevron
+          c.moveTo(-S * 0.35, -S * 0.50);
+          c.lineTo(0, S * 0.52);
+          c.lineTo(S * 0.35, -S * 0.50);
+          break;
+
+        case 'W':
+          // Inverted crown with two spacious troughs
+          c.moveTo(-S * 0.42, -S * 0.50);
+          c.lineTo(-S * 0.22, S * 0.50);
+          c.lineTo(0, -S * 0.06);
+          c.lineTo(S * 0.22, S * 0.50);
+          c.lineTo(S * 0.42, -S * 0.50);
+          break;
+
+        case 'X':
+          // Bold diagonal criss-cross
+          c.moveTo(-S * 0.34, -S * 0.50);
+          c.lineTo(S * 0.34, S * 0.50);
+          c.moveTo(S * 0.34, -S * 0.50);
+          c.lineTo(-S * 0.34, S * 0.50);
+          break;
+
+        case 'Y':
+          // Symmetrical upper funnel over sturdy grounding post
+          c.moveTo(-S * 0.34, -S * 0.50);
+          c.lineTo(0, 0);
+          c.lineTo(S * 0.34, -S * 0.50);
+          c.moveTo(0, 0);
+          c.lineTo(0, S * 0.50);
+          break;
+
+        case 'Z':
+          // Crisp roof, dynamic diagonal, and stable floor
+          c.moveTo(-S * 0.34, -S * 0.48);
+          c.lineTo(S * 0.34, -S * 0.48);
+          c.lineTo(-S * 0.34, S * 0.48);
+          c.lineTo(S * 0.34, S * 0.48);
+          break;
+      }
+    }
+
+    const balloons = [];
+    const particles = [];
+    const floatingRewards = [];
+
+    const SPEED_SETTINGS = {
+      slow:   { minVy: 0.35, maxVy: 0.65, swayAmp: 42, swaySpeed: 0.024, tiltAmp: 0.22 },
+      normal: { minVy: 0.75, maxVy: 1.15, swayAmp: 52, swaySpeed: 0.030, tiltAmp: 0.28 },
+      fast:   { minVy: 1.35, maxVy: 1.85, swayAmp: 62, swaySpeed: 0.036, tiltAmp: 0.34 }
+    };
+    let currentSpeedMode = 'normal';
+
+    class AlphabetBalloon {
+      constructor(letterKey, x = null) {
+        this.letter = letterKey;
+        this.info = PHONICS_DATA[this.letter];
+
+        const minDim = Math.min(width, height);
+        this.S = Math.max(90, Math.min(minDim * 0.22, 135));
+        this.halfW = this.S * 0.52;
+        this.halfH = this.S * 0.58;
+
+        this.x = x !== null ? x : Math.random() * (width - this.halfW * 3) + this.halfW * 1.5;
+        this.y = height + this.halfH + 20;
+
+        const spd = SPEED_SETTINGS[currentSpeedMode];
+        this.vy = spd.minVy + Math.random() * (spd.maxVy - spd.minVy);
+        this.baseX = this.x;
+        
+        this.swayAmp = spd.swayAmp * (0.85 + Math.random() * 0.30);
+        this.swaySpeed = spd.swaySpeed * (0.88 + Math.random() * 0.24);
+        this.swayPhase = Math.random() * Math.PI * 2;
+        this.secondaryPhase = Math.random() * Math.PI * 2;
+        this.secondarySpeed = this.swaySpeed * 1.45;
+        this.tiltAmp = spd.tiltAmp * (0.90 + Math.random() * 0.20);
+
+        this.rotation = 0;
+        this.blinkTimer = Math.random() * 120 + 80;
+        this.isBlinking = false;
+        this.blinkCount = 0;
+
+        this.stringSegments = [];
+        const segmentCount = 6;
+        const segmentLen = 11;
+        for (let s = 0; s < segmentCount; s++) {
+          this.stringSegments.push({
+            x: this.x,
+            y: this.y + this.halfH + s * segmentLen
+          });
+        }
+
+        this.glowColor = this.info.glowColor;
+        this.lightColor = this.info.lightColor;
+        this.darkColor = this.info.darkColor;
+        this.hue = this.info.hue;
+      }
+
+      update() {
+        this.swayPhase += this.swaySpeed;
+        this.secondaryPhase += this.secondarySpeed;
+
+        const primaryWave = Math.sin(this.swayPhase) * this.swayAmp;
+        const secondaryWave = Math.sin(this.secondaryPhase) * (this.swayAmp * 0.28);
+        this.x = this.baseX + primaryWave + secondaryWave;
+        this.y -= this.vy;
+
+        const swayVelocity = Math.cos(this.swayPhase);
+        this.rotation = swayVelocity * this.tiltAmp + Math.sin(this.secondaryPhase) * 0.06;
+
+        const knotAnchorX = this.x + Math.sin(this.rotation) * 6;
+        const knotAnchorY = this.y + this.halfH;
+
+        let leaderX = knotAnchorX;
+        let leaderY = knotAnchorY;
+        const segDist = 11;
+
+        for (let i = 0; i < this.stringSegments.length; i++) {
+          const seg = this.stringSegments[i];
+          const dx = seg.x - leaderX;
+          const dy = seg.y - leaderY;
+          const dist = Math.hypot(dx, dy) || 1;
+          
+          seg.x = leaderX + (dx / dist) * segDist;
+          seg.y = leaderY + (dy / dist) * segDist;
+          seg.x += Math.sin(this.swayPhase - i * 0.45) * 1.8;
+
+          leaderX = seg.x;
+          leaderY = seg.y;
+        }
+
+        this.blinkTimer--;
+        if (this.blinkTimer <= 0) {
+          this.isBlinking = true;
+          this.blinkCount++;
+          if (this.blinkCount > 8) {
+            this.isBlinking = false;
+            this.blinkCount = 0;
+            this.blinkTimer = 130 + Math.random() * 160;
+          }
+        }
+      }
+
+      draw(c) {
+        c.save();
+
+        // 1. Ribbons and strings
+        if (this.stringSegments.length > 1) {
+          c.save();
+          c.beginPath();
+          c.moveTo(this.x, this.y + this.halfH);
+          for (let i = 0; i < this.stringSegments.length - 1; i++) {
+            const curr = this.stringSegments[i];
+            const next = this.stringSegments[i + 1];
+            const xc = (curr.x + next.x) / 2;
+            const yc = (curr.y + next.y) / 2;
+            c.quadraticCurveTo(curr.x, curr.y, xc, yc);
+          }
+          const last = this.stringSegments[this.stringSegments.length - 1];
+          c.lineTo(last.x, last.y);
+          c.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+          c.lineWidth = 2.5;
+          c.lineCap = 'round';
+          c.stroke();
+          c.restore();
+        }
+
+        c.translate(this.x, this.y);
+        c.rotate(this.rotation);
+
+        const S = this.S;
+
+        // Bottom knot
+        c.fillStyle = this.darkColor;
+        c.beginPath();
+        c.moveTo(-6, this.halfH);
+        c.lineTo(6, this.halfH);
+        c.lineTo(8, this.halfH + 10);
+        c.lineTo(-8, this.halfH + 10);
+        c.closePath();
+        c.fill();
+
+        c.lineCap = 'round';
+        c.lineJoin = 'round';
+
+        // LAYER 1: Deep Drop Shadow on the inflated silhouette
+        c.save();
+        c.shadowColor = 'rgba(0, 0, 0, 0.45)';
+        c.shadowOffsetY = 8;
+        c.shadowBlur = 14;
+        c.strokeStyle = this.darkColor;
+        c.lineWidth = S * 0.46;
+        traceWideAlphabetPath(c, this.letter, S);
+        c.stroke();
+        c.restore();
+
+        // LAYER 2: Wide Candy-Colored Foil Outline & Outer Cushion Glow
+        const candyGrad = c.createLinearGradient(-this.halfW, -this.halfH, this.halfW, this.halfH);
+        candyGrad.addColorStop(0, this.lightColor);
+        candyGrad.addColorStop(0.5, this.glowColor);
+        candyGrad.addColorStop(1, this.darkColor);
+
+        c.save();
+        c.shadowColor = this.glowColor;
+        c.shadowBlur = 18;
+        c.strokeStyle = candyGrad;
+        c.lineWidth = S * 0.42;
+        traceWideAlphabetPath(c, this.letter, S);
+        c.stroke();
+        c.restore();
+
+        // LAYER 3: Dark Mylar Inner Seam Bead
+        c.strokeStyle = this.darkColor;
+        c.lineWidth = S * 0.28;
+        traceWideAlphabetPath(c, this.letter, S);
+        c.stroke();
+
+        // LAYER 4: Bright Solid Pure WHITE Balloon Face (leaving internal loops open and spacious!)
+        c.strokeStyle = '#ffffff';
+        c.lineWidth = S * 0.22;
+        traceWideAlphabetPath(c, this.letter, S);
+        c.stroke();
+
+        // LAYER 5: 3D Glossy Specular Highlight Stripe
+        c.save();
+        c.translate(-3, -3);
+        c.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        c.lineWidth = S * 0.055;
+        traceWideAlphabetPath(c, this.letter, S);
+        c.stroke();
+        c.restore();
+
+        // LAYER 6: Kawaii Face placed neatly on the white letter body
+        const eyeOffset = S * 0.16;
+        let faceY = -S * 0.02;
+        if (this.letter === 'A') faceY = S * 0.12;
+        if (this.letter === 'O' || this.letter === 'D' || this.letter === 'Q') faceY = 0;
+        if (this.letter === 'B') faceY = -S * 0.25;
+        if (this.letter === 'P' || this.letter === 'R') faceY = -S * 0.22;
+        if (this.letter === 'G') faceY = -S * 0.16;
+        if (this.letter === 'S') faceY = -S * 0.20;
+
+        if (this.isBlinking) {
+          c.strokeStyle = '#1e1b4b';
+          c.lineWidth = 3.2;
+          c.beginPath();
+          c.arc(-eyeOffset, faceY, 4.5, Math.PI, 0);
+          c.arc(eyeOffset, faceY, 4.5, Math.PI, 0);
+          c.stroke();
+        } else {
+          [-eyeOffset, eyeOffset].forEach(ex => {
+            c.fillStyle = '#1e1b4b';
+            c.beginPath();
+            c.arc(ex, faceY, 5.5, 0, Math.PI * 2);
+            c.fill();
+
+            c.fillStyle = '#ffffff';
+            c.beginPath();
+            c.arc(ex - 1.8, faceY - 1.8, 2.2, 0, Math.PI * 2);
+            c.arc(ex + 1.8, faceY + 1.8, 1.1, 0, Math.PI * 2);
+            c.fill();
+          });
+        }
+
+        // Rosy pink cheeks
+        c.fillStyle = 'rgba(255, 95, 162, 0.75)';
+        c.beginPath();
+        c.arc(-eyeOffset - 5, faceY + 8, 4.8, 0, Math.PI * 2);
+        c.arc(eyeOffset + 5, faceY + 8, 4.8, 0, Math.PI * 2);
+        c.fill();
+
+        // Smiling mouth
+        c.strokeStyle = '#1e1b4b';
+        c.lineWidth = 3;
+        c.lineCap = 'round';
+        c.beginPath();
+        c.arc(0, faceY + 5, 7, 0.2, Math.PI - 0.2);
+        c.stroke();
+
+        c.restore();
+      }
+
+      containsPoint(px, py) {
+        const dx = Math.abs(px - this.x);
+        const dy = Math.abs(py - this.y);
+        const pad = 26;
+        return dx <= (this.halfW + pad) && dy <= (this.halfH + pad);
+      }
+    }
+
+    class ConfettiShard {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 9;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed - 3;
+        this.gravity = 0.24;
+        this.friction = 0.96;
+        this.size = 6 + Math.random() * 9;
+        this.alpha = 1;
+        this.decay = 0.016 + Math.random() * 0.02;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.vRot = (Math.random() - 0.5) * 0.35;
+        this.shape = Math.random() > 0.4 ? 'rect' : 'circle';
+      }
+
+      update() {
+        this.vx *= this.friction;
+        this.vy = (this.vy + this.gravity) * this.friction;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.vRot;
+        this.alpha -= this.decay;
+      }
+
+      draw(c) {
+        if (this.alpha <= 0) return;
+        c.save();
+        c.translate(this.x, this.y);
+        c.rotate(this.rotation);
+        c.globalAlpha = Math.max(0, this.alpha);
+
+        c.fillStyle = this.color;
+        if (this.shape === 'rect') {
+          c.fillRect(-this.size / 2, -this.size / 3, this.size, this.size * 0.65);
+        } else {
+          c.beginPath();
+          c.arc(0, 0, this.size * 0.45, 0, Math.PI * 2);
+          c.fill();
+        }
+        c.restore();
+      }
+    }
+
+    class ShockwaveRing {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = 10;
+        this.maxRadius = 80 + Math.random() * 30;
+        this.alpha = 0.95;
+      }
+
+      update() {
+        this.radius += 5.2;
+        this.alpha -= 0.045;
+      }
+
+      draw(c) {
+        if (this.alpha <= 0) return;
+        c.save();
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        c.strokeStyle = this.color;
+        c.lineWidth = 4.5 * this.alpha;
+        c.globalAlpha = Math.max(0, this.alpha);
+        c.stroke();
+        c.restore();
+      }
+    }
+
+    class FloatingReward {
+      constructor(x, y, text) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.vy = -3;
+        this.alpha = 1;
+        this.scale = 0.6;
+      }
+
+      update() {
+        this.y += this.vy;
+        this.vy *= 0.96;
+        if (this.scale < 1.15) this.scale += 0.06;
+        this.alpha -= 0.016;
+      }
+
+      draw(c) {
+        if (this.alpha <= 0) return;
+        c.save();
+        c.translate(this.x, this.y);
+        c.scale(this.scale, this.scale);
+        c.globalAlpha = Math.max(0, this.alpha);
+        c.fillStyle = '#ffea00';
+        c.shadowColor = '#ff9900';
+        c.shadowBlur = 10;
+        c.font = "800 30px 'Fredoka One', sans-serif";
+        c.textAlign = 'center';
+        c.fillText(this.text, 0, 0);
+        c.restore();
+      }
+    }
+
+    function createPopBurst(x, y, color, letter) {
+      for (let i = 0; i < 30; i++) {
+        const pColor = i % 2 === 0 ? color : ['#ffd700', '#ffffff', '#ff007f', '#00f5d4'][i % 4];
+        particles.push(new ConfettiShard(x, y, pColor));
+      }
+      particles.push(new ShockwaveRing(x, y, color));
+      floatingRewards.push(new FloatingReward(x, y - 25, `+1 ⭐ ${letter}`));
+    }
+
+    function getNextLetterKey() {
+      // Find all letters currently active and floating on screen
+      const activeLetters = new Set(balloons.map(b => b.letter));
+      const availableLetters = ALPHABET_LIST.filter(k => !activeLetters.has(k));
+
+      // If all letters are somehow active, do not spawn a duplicate
+      if (availableLetters.length === 0) {
+        return null;
+      }
+
+      if (isSequentialMode) {
+        // Find next sequential letter from nextLetterIndex that is not currently floating
+        for (let i = 0; i < ALPHABET_LIST.length; i++) {
+          const candidateIdx = (nextLetterIndex + i) % ALPHABET_LIST.length;
+          const candidate = ALPHABET_LIST[candidateIdx];
+          if (!activeLetters.has(candidate)) {
+            nextLetterIndex = (candidateIdx + 1) % ALPHABET_LIST.length;
+            return candidate;
+          }
+        }
+        return null;
+      } else {
+        // Random mode: give preference to uncollected letters among available unique ones
+        const uncollectedAvailable = availableLetters.filter(k => !collectedLetters.has(k));
+        if (uncollectedAvailable.length > 0 && Math.random() < 0.70) {
+          return uncollectedAvailable[Math.floor(Math.random() * uncollectedAvailable.length)];
+        }
+        return availableLetters[Math.floor(Math.random() * availableLetters.length)];
+      }
+    }
+
+    function spawnLetterBalloon(customX = null) {
+      const maxBalloons = Math.min(ALPHABET_LIST.length, Math.max(4, Math.floor(width / 80)));
+      if (balloons.length >= maxBalloons && customX === null) {
+        return;
+      }
+
+      const letter = getNextLetterKey();
+      // Skip spawning if no non-duplicate candidate is available
+      if (!letter) {
+        return;
+      }
+
+      balloons.push(new AlphabetBalloon(letter, customX));
+    }
+
+    function handleLetterPop(px, py) {
+      initAudio();
+
+      for (let i = balloons.length - 1; i >= 0; i--) {
+        const b = balloons[i];
+        if (b.containsPoint(px, py)) {
+          createPopBurst(b.x, b.y, b.glowColor, b.letter);
+          playPopAudio(b.hue);
+          playArpeggioChime(b.info.noteFreq);
+          speakPhonics(b.letter);
+          showPhonicsBadge(b.letter);
+          registerLetterCollected(b.letter);
+
+          score++;
+          document.getElementById('score-counter').textContent = score;
+
+          // Remove immediately; letter becomes re-eligible for spawning
+          balloons.splice(i, 1);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    gameCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const rect = gameCanvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      handleLetterPop(px, py);
+    }, { passive: false });
+
+    const splash = document.getElementById('splash-modal');
+    splash.addEventListener('pointerdown', () => {
+      initAudio();
+      splash.classList.add('hidden');
+    });
+
+    const speedButtons = document.querySelectorAll('.speed-btn');
+    speedButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        speedButtons.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        currentSpeedMode = btn.dataset.speed;
+
+        const spd = SPEED_SETTINGS[currentSpeedMode];
+        balloons.forEach(b => {
+          b.vy = spd.minVy + Math.random() * (spd.maxVy - spd.minVy);
+          b.swayAmp = spd.swayAmp * (0.85 + Math.random() * 0.30);
+          b.swaySpeed = spd.swaySpeed * (0.88 + Math.random() * 0.24);
+          b.tiltAmp = spd.tiltAmp * (0.90 + Math.random() * 0.20);
+        });
+      });
+    });
+
+    document.getElementById('btn-spawn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      initAudio();
+      spawnLetterBalloon(Math.random() * (width - 120) + 60);
+    });
+
+    const btnSound = document.getElementById('btn-sound');
+    btnSound.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isSoundEnabled = !isSoundEnabled;
+      btnSound.classList.toggle('active', isSoundEnabled);
+      document.getElementById('sound-icon').textContent = isSoundEnabled ? '🔔' : '🔕';
+      if (isSoundEnabled) initAudio();
+    });
+
+    const btnSpeech = document.getElementById('btn-speech');
+    btnSpeech.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isSpeechEnabled = !isSpeechEnabled;
+      btnSpeech.classList.toggle('active', isSpeechEnabled);
+      document.getElementById('speech-icon').textContent = isSpeechEnabled ? '🗣️' : '🤫';
+    });
+
+    const btnOrder = document.getElementById('btn-order');
+    btnOrder.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isSequentialMode = !isSequentialMode;
+      btnOrder.classList.toggle('active', isSequentialMode);
+      btnOrder.title = isSequentialMode ? "A-Z Sequential: ON" : "A-Z Random Shuffle";
+      document.getElementById('order-icon').textContent = isSequentialMode ? '🔤' : '🎲';
+    });
+
+    let spawnTimer = 0;
+
+    function gameLoop(time) {
+      requestAnimationFrame(gameLoop);
+
+      drawBackdrop();
+      ctx.clearRect(0, 0, width, height);
+
+      spawnTimer--;
+      if (spawnTimer <= 0) {
+        spawnLetterBalloon();
+        spawnTimer = 85 + Math.random() * 65;
+      }
+
+      for (let i = balloons.length - 1; i >= 0; i--) {
+        const b = balloons[i];
+        b.update();
+        b.draw(ctx);
+
+        // When a letter floats off top of screen, remove it so it can spawn again
+        if (b.y < -b.halfH * 2) {
+          balloons.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        p.draw(ctx);
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      for (let i = floatingRewards.length - 1; i >= 0; i--) {
+        const r = floatingRewards[i];
+        r.update();
+        r.draw(ctx);
+        if (r.alpha <= 0) {
+          floatingRewards.splice(i, 1);
+        }
+      }
+    }
+
+    window.addEventListener('load', () => {
+      // Initialize with non-duplicate shuffled letters
+      const initialCount = Math.min(4, ALPHABET_LIST.length);
+      const shuffled = [...ALPHABET_LIST].sort(() => Math.random() - 0.5).slice(0, initialCount);
+
+      for (let i = 0; i < initialCount; i++) {
+        const posX = (width * 0.18) + (i * (width * 0.22));
+        const b = new AlphabetBalloon(shuffled[i], posX);
+        b.y = height * 0.52 + i * (height * 0.1);
+        balloons.push(b);
+      }
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+</body>
+</html>

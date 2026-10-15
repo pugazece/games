@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NumberPop">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#120c2e">
   <title>Number Foil Balloon Pop! 🎈🔢</title>
   
+  <!-- Standalone Manifest Data URI with unique id, name, and start_url to prevent overwriting BallonPop -->
+  <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22id%22%3A%22number-balloon-pop-unique%22%2C%22name%22%3A%22Number%20Foil%20Balloon%20Pop%22%2C%22short_name%22%3A%22NumberPop%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0a28%22%2C%22theme_color%22%3A%22%23120c2e%22%7D">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
@@ -228,20 +232,20 @@
 
     .counting-banner {
       position: absolute;
-      top: 16%;
+      top: 18%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0.6);
       z-index: 35;
       pointer-events: none;
       opacity: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      border-radius: 28px;
+      justify-content: center;
+      gap: 16px;
+      padding: 16px 36px;
+      border-radius: 36px;
       background: rgba(255, 255, 255, 0.98);
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45), 0 0 35px rgba(255, 215, 0, 0.7);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45), 0 0 35px rgba(255, 215, 0, 0.65);
       border: 4px solid #ffd700;
       transition: opacity 0.2s, transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
       max-width: 90vw;
@@ -252,32 +256,17 @@
       transform: translate(-50%, -50%) scale(1.05);
     }
 
-    .banner-top-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
     .banner-number {
-      font-size: clamp(2.4rem, 7vw, 3.2rem);
+      font-size: clamp(3rem, 9vw, 4.4rem);
       font-weight: 800;
       line-height: 1;
       color: #ff007f;
     }
 
     .banner-word {
-      font-size: clamp(1.4rem, 4.4vw, 1.8rem);
+      font-size: clamp(1.8rem, 5.5vw, 2.4rem);
       font-weight: 800;
       color: #3b28cc;
-    }
-
-    .banner-items {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      justify-content: center;
-      font-size: clamp(1.5rem, 4.8vw, 2.1rem);
-      line-height: 1.2;
     }
 
     #splash-modal {
@@ -349,8 +338,9 @@
 
       <div class="controls-group">
         <div class="speed-selector" id="speed-selector" title="Speed Settings">
-          <button class="speed-btn" data-speed="slow" aria-label="Slow mode">🐢</button>
-          <button class="speed-btn selected" data-speed="normal" aria-label="Normal mode">🐰</button>
+          <!-- Slow is selected by default -->
+          <button class="speed-btn selected" data-speed="slow" aria-label="Slow mode">🐢</button>
+          <button class="speed-btn" data-speed="normal" aria-label="Normal mode">🐰</button>
           <button class="speed-btn" data-speed="fast" aria-label="Fast mode">🐆</button>
         </div>
 
@@ -373,11 +363,8 @@
     </header>
 
     <div id="count-banner" class="counting-banner">
-      <div class="banner-top-row">
-        <span id="banner-num" class="banner-number">3</span>
-        <span id="banner-word" class="banner-word">Three!</span>
-      </div>
-      <div id="banner-items" class="banner-items">🌸🌸🌸</div>
+      <span id="banner-num" class="banner-number">3</span>
+      <span id="banner-word" class="banner-word">Three!</span>
     </div>
 
     <footer class="footer-bar">
@@ -387,22 +374,22 @@
     <div id="splash-modal">
       <div class="start-circle-btn">🎈</div>
       <h1 class="splash-title">Number Balloon Pop!</h1>
-      <p class="splash-desc">Pop super clear numbers with wide loops & bright white faces from 0 to 9!</p>
+      <p class="splash-desc">Pop bright shiny numbers from 0 to 9!</p>
     </div>
   </div>
 
   <script>
     const NUMBER_DATA = {
-      '0': { word: 'Zero', countWord: 'Zero! None at all!', emoji: '🎈', count: 0, glowColor: '#ff2a55', lightColor: '#ff708d', darkColor: '#a10023', hue: 345, noteFreq: 261.63 },
-      '1': { word: 'One', countWord: 'One! One shiny star!', emoji: '🌟', count: 1, glowColor: '#ff9f1c', lightColor: '#ffd166', darkColor: '#bc5b00', hue: 35, noteFreq: 293.66 },
-      '2': { word: 'Two', countWord: 'Two! Two little ducks!', emoji: '🦆', count: 2, glowColor: '#ffb703', lightColor: '#ffe082', darkColor: '#b57900', hue: 48, noteFreq: 329.63 },
-      '3': { word: 'Three', countWord: 'Three! Three sweet flowers!', emoji: '🌸', count: 3, glowColor: '#06d6a0', lightColor: '#80ffdb', darkColor: '#00664d', hue: 164, noteFreq: 349.23 },
-      '4': { word: 'Four', countWord: 'Four! Four zoom cars!', emoji: '🚗', count: 4, glowColor: '#00b4d8', lightColor: '#68d8d6', darkColor: '#005f73', hue: 190, noteFreq: 392.00 },
-      '5': { word: 'Five', countWord: 'Five! High five hands!', emoji: '🖐️', count: 5, glowColor: '#4361ee', lightColor: '#7b92ff', darkColor: '#1d2a85', hue: 228, noteFreq: 440.00 },
-      '6': { word: 'Six', countWord: 'Six! Six cute ladybugs!', emoji: '🐞', count: 6, glowColor: '#7209b7', lightColor: '#b5179e', darkColor: '#3c096c', hue: 276, noteFreq: 493.88 },
-      '7': { word: 'Seven', countWord: 'Seven! Seven magic rainbows!', emoji: '🌈', count: 7, glowColor: '#ff007f', lightColor: '#ff80bf', darkColor: '#99004d', hue: 330, noteFreq: 523.25 },
-      '8': { word: 'Eight', countWord: 'Eight! Eight octopus legs!', emoji: '🐙', count: 8, glowColor: '#e05780', lightColor: '#ff9ebb', darkColor: '#8f1d41', hue: 342, noteFreq: 587.33 },
-      '9': { word: 'Nine', countWord: 'Nine! Nine juicy strawberries!', emoji: '🍓', count: 9, glowColor: '#38b000', lightColor: '#70e000', darkColor: '#004b23', hue: 100, noteFreq: 659.25 }
+      '0': { word: 'Zero', glowColor: '#ff2a55', lightColor: '#ff708d', darkColor: '#a10023', hue: 345, noteFreq: 261.63 },
+      '1': { word: 'One', glowColor: '#ff9f1c', lightColor: '#ffd166', darkColor: '#bc5b00', hue: 35, noteFreq: 293.66 },
+      '2': { word: 'Two', glowColor: '#ffb703', lightColor: '#ffe082', darkColor: '#b57900', hue: 48, noteFreq: 329.63 },
+      '3': { word: 'Three', glowColor: '#06d6a0', lightColor: '#80ffdb', darkColor: '#00664d', hue: 164, noteFreq: 349.23 },
+      '4': { word: 'Four', glowColor: '#00b4d8', lightColor: '#68d8d6', darkColor: '#005f73', hue: 190, noteFreq: 392.00 },
+      '5': { word: 'Five', glowColor: '#4361ee', lightColor: '#7b92ff', darkColor: '#1d2a85', hue: 228, noteFreq: 440.00 },
+      '6': { word: 'Six', glowColor: '#7209b7', lightColor: '#b5179e', darkColor: '#3c096c', hue: 276, noteFreq: 493.88 },
+      '7': { word: 'Seven', glowColor: '#ff007f', lightColor: '#ff80bf', darkColor: '#99004d', hue: 330, noteFreq: 523.25 },
+      '8': { word: 'Eight', glowColor: '#e05780', lightColor: '#ff9ebb', darkColor: '#8f1d41', hue: 342, noteFreq: 587.33 },
+      '9': { word: 'Nine', glowColor: '#38b000', lightColor: '#70e000', darkColor: '#004b23', hue: 100, noteFreq: 659.25 }
     };
 
     const NUMBER_KEYS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -553,11 +540,9 @@
       if (!isSpeechEnabled || !('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
-        const data = NUMBER_DATA[numKey];
-        const phrase = data.countWord;
-        const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.rate = 0.86;
-        utterance.pitch = 1.25;
+        const utterance = new SpeechSynthesisUtterance(numKey);
+        utterance.rate = 0.95;
+        utterance.pitch = 1.2;
 
         if (voiceList.length > 0) {
           const preferred = voiceList.find(v => 
@@ -596,7 +581,6 @@
     const countBanner = document.getElementById('count-banner');
     const bannerNum = document.getElementById('banner-num');
     const bannerWord = document.getElementById('banner-word');
-    const bannerItems = document.getElementById('banner-items');
     let bannerTimeout = null;
 
     function showCountingBanner(numKey) {
@@ -606,17 +590,11 @@
       bannerWord.textContent = `${data.word}!`;
       countBanner.style.borderColor = data.glowColor;
 
-      if (data.count === 0) {
-        bannerItems.innerHTML = '<span style="font-size: 1.1rem; color: #666; font-weight: 700;">Zero means none!</span>';
-      } else {
-        bannerItems.textContent = data.emoji.repeat(data.count);
-      }
-
       countBanner.classList.add('show');
       if (bannerTimeout) clearTimeout(bannerTimeout);
       bannerTimeout = setTimeout(() => {
         countBanner.classList.remove('show');
-      }, 1800);
+      }, 1300);
     }
 
     const stars = [];
@@ -728,17 +706,14 @@
       }
     }
 
-    // Custom procedural tubular path definitions ensuring wide, distinct inner loops for 0, 4, 6, 8, 9
     function traceWideNumberPath(c, num, S) {
       c.beginPath();
       switch (num) {
         case '0':
-          // Extra-wide hollow balloon ring
           c.ellipse(0, 0, S * 0.38, S * 0.48, 0, 0, Math.PI * 2);
           break;
 
         case '1':
-          // Clear bold stem with gentle roof cap and grounded base
           c.moveTo(-S * 0.22, -S * 0.30);
           c.lineTo(S * 0.05, -S * 0.50);
           c.lineTo(S * 0.05, S * 0.50);
@@ -747,21 +722,18 @@
           break;
 
         case '2':
-          // Sweet curved toddler hook down to baseline
           c.arc(0, -S * 0.22, S * 0.32, -Math.PI * 0.95, 0.2);
           c.lineTo(-S * 0.35, S * 0.50);
           c.lineTo(S * 0.38, S * 0.50);
           break;
 
         case '3':
-          // Two soft, wide open bubble lobes
           c.arc(0, -S * 0.24, S * 0.27, -Math.PI * 0.85, Math.PI * 0.55);
           c.moveTo(S * 0.15, 0);
           c.arc(0, S * 0.24, S * 0.29, -Math.PI * 0.55, Math.PI * 0.85);
           break;
 
         case '4':
-          // Generous wide-open triangular window loop with vertical post
           c.moveTo(-S * 0.05, -S * 0.50);
           c.lineTo(-S * 0.40, S * 0.12);
           c.lineTo(S * 0.40, S * 0.12);
@@ -770,7 +742,6 @@
           break;
 
         case '5':
-          // Flat roof, crisp drop, and wide round belly loop
           c.moveTo(S * 0.32, -S * 0.50);
           c.lineTo(-S * 0.26, -S * 0.50);
           c.lineTo(-S * 0.26, -S * 0.06);
@@ -778,28 +749,24 @@
           break;
 
         case '6':
-          // Correctly oriented '6': curved spine starting at top right, sweeping down the left, into a wide bottom loop
           c.arc(S * 0.02, S * 0.18, S * 0.31, 0, Math.PI * 2);
           c.moveTo(-S * 0.29, S * 0.18);
           c.bezierCurveTo(-S * 0.29, -S * 0.22, S * 0.05, -S * 0.50, S * 0.24, -S * 0.48);
           break;
 
         case '7':
-          // High horizontal bar and sweeping dynamic strut
           c.moveTo(-S * 0.38, -S * 0.50);
           c.lineTo(S * 0.38, -S * 0.50);
           c.lineTo(-S * 0.10, S * 0.52);
           break;
 
         case '8':
-          // Two separate, wide-open circular loops ensuring big visible gaps top and bottom!
           c.arc(0, -S * 0.24, S * 0.26, 0, Math.PI * 2);
           c.moveTo(S * 0.33, S * 0.23);
           c.arc(0, S * 0.23, S * 0.33, 0, Math.PI * 2);
           break;
 
         case '9':
-          // Correctly oriented '9': wide upper loop on the left/center, with spine descending on the right down to bottom left hook
           c.arc(-S * 0.02, -S * 0.18, S * 0.31, 0, Math.PI * 2);
           c.moveTo(S * 0.29, -S * 0.18);
           c.bezierCurveTo(S * 0.29, S * 0.22, -S * 0.05, S * 0.50, -S * 0.24, S * 0.48);
@@ -811,28 +778,33 @@
     const particles = [];
     const floatingRewards = [];
 
+    // Tuned speed settings; sway amplitude tightened to keep balloons well-separated
     const SPEED_SETTINGS = {
-      slow:   { minVy: 0.35, maxVy: 0.65, swayAmp: 42, swaySpeed: 0.024, tiltAmp: 0.22 },
-      normal: { minVy: 0.75, maxVy: 1.15, swayAmp: 52, swaySpeed: 0.030, tiltAmp: 0.28 },
-      fast:   { minVy: 1.35, maxVy: 1.85, swayAmp: 62, swaySpeed: 0.036, tiltAmp: 0.34 }
+      slow:   { minVy: 0.35, maxVy: 0.60, swayAmp: 16, swaySpeed: 0.018, tiltAmp: 0.16 },
+      normal: { minVy: 0.75, maxVy: 1.10, swayAmp: 22, swaySpeed: 0.026, tiltAmp: 0.22 },
+      fast:   { minVy: 1.30, maxVy: 1.75, swayAmp: 28, swaySpeed: 0.032, tiltAmp: 0.28 }
     };
-    let currentSpeedMode = 'normal';
+    
+    // Slow by default
+    let currentSpeedMode = 'slow';
 
     class NumberBalloon {
-      constructor(numKey, x = null) {
+      constructor(numKey, x = null, y = null) {
         this.number = numKey;
         this.info = NUMBER_DATA[this.number];
 
         const minDim = Math.min(width, height);
-        this.S = Math.max(90, Math.min(minDim * 0.22, 135));
+        this.S = Math.max(86, Math.min(minDim * 0.20, 126));
         this.halfW = this.S * 0.52;
         this.halfH = this.S * 0.58;
+        this.radius = Math.max(this.halfW, this.halfH);
 
-        this.x = x !== null ? x : Math.random() * (width - this.halfW * 3) + this.halfW * 1.5;
-        this.y = height + this.halfH + 20;
+        this.x = x !== null ? x : width / 2;
+        this.y = y !== null ? y : (height + this.halfH + 20);
 
         const spd = SPEED_SETTINGS[currentSpeedMode];
-        this.vy = spd.minVy + Math.random() * (spd.maxVy - spd.minVy);
+        // Use identical vertical speed across all balloons to prevent vertical overtaking/collisions
+        this.vy = (spd.minVy + spd.maxVy) * 0.5;
         this.baseX = this.x;
         
         this.swayAmp = spd.swayAmp * (0.85 + Math.random() * 0.30);
@@ -911,7 +883,6 @@
       draw(c) {
         c.save();
 
-        // 1. Ribbons and string
         if (this.stringSegments.length > 1) {
           c.save();
           c.beginPath();
@@ -937,7 +908,6 @@
 
         const S = this.S;
 
-        // Bottom knot
         c.fillStyle = this.darkColor;
         c.beginPath();
         c.moveTo(-6, this.halfH);
@@ -950,7 +920,6 @@
         c.lineCap = 'round';
         c.lineJoin = 'round';
 
-        // LAYER 1: Deep Drop Shadow on the inflated foil silhouette
         c.save();
         c.shadowColor = 'rgba(0, 0, 0, 0.45)';
         c.shadowOffsetY = 8;
@@ -961,7 +930,6 @@
         c.stroke();
         c.restore();
 
-        // LAYER 2: Wide Candy-Colored Foil Outline & Outer Glow
         const candyGrad = c.createLinearGradient(-this.halfW, -this.halfH, this.halfW, this.halfH);
         candyGrad.addColorStop(0, this.lightColor);
         candyGrad.addColorStop(0.5, this.glowColor);
@@ -976,19 +944,16 @@
         c.stroke();
         c.restore();
 
-        // LAYER 3: Dark Mylar Inner Seam Bead
         c.strokeStyle = this.darkColor;
         c.lineWidth = S * 0.28;
         traceWideNumberPath(c, this.number, S);
         c.stroke();
 
-        // LAYER 4: Bright Solid Pure WHITE Balloon Face (leaving inner holes open and spacious!)
         c.strokeStyle = '#ffffff';
         c.lineWidth = S * 0.22;
         traceWideNumberPath(c, this.number, S);
         c.stroke();
 
-        // LAYER 5: 3D Glossy Specular Highlight Stripe
         c.save();
         c.translate(-3, -3);
         c.strokeStyle = 'rgba(255, 255, 255, 0.95)';
@@ -997,7 +962,6 @@
         c.stroke();
         c.restore();
 
-        // LAYER 6: Kawaii Face placed neatly on the white balloon body
         const eyeOffset = S * 0.16;
         let faceY = -S * 0.02;
         if (this.number === '0') faceY = 0;
@@ -1027,14 +991,12 @@
           });
         }
 
-        // Rosy pink cheeks
         c.fillStyle = 'rgba(255, 95, 162, 0.75)';
         c.beginPath();
         c.arc(-eyeOffset - 5, faceY + 8, 4.8, 0, Math.PI * 2);
         c.arc(eyeOffset + 5, faceY + 8, 4.8, 0, Math.PI * 2);
         c.fill();
 
-        // Smiling mouth
         c.strokeStyle = '#1e1b4b';
         c.lineWidth = 3;
         c.lineCap = 'round';
@@ -1050,6 +1012,57 @@
         const dy = Math.abs(py - this.y);
         const pad = 26;
         return dx <= (this.halfW + pad) && dy <= (this.halfH + pad);
+      }
+    }
+
+    // Resolves any overlapping balloon bounding circles with elastic separation
+    function resolveBalloonOverlaps() {
+      const minDistancePadding = 24;
+      for (let iter = 0; iter < 4; iter++) {
+        for (let i = 0; i < balloons.length; i++) {
+          for (let j = i + 1; j < balloons.length; j++) {
+            const b1 = balloons[i];
+            const b2 = balloons[j];
+
+            let dx = b2.x - b1.x;
+            let dy = b2.y - b1.y;
+            let dist = Math.hypot(dx, dy);
+            const minDist = (b1.radius + b2.radius) + minDistancePadding;
+
+            if (dist < minDist) {
+              if (dist === 0) {
+                dx = (Math.random() - 0.5) * 2;
+                dy = (Math.random() - 0.5) * 2;
+                dist = Math.hypot(dx, dy) || 1;
+              }
+
+              const overlap = minDist - dist;
+              const nx = dx / dist;
+              const ny = dy / dist;
+
+              // Gently separate both positions
+              const pushX = nx * overlap * 0.5;
+              const pushY = ny * overlap * 0.5;
+
+              b1.x -= pushX;
+              b1.y -= pushY;
+              b1.baseX -= pushX;
+
+              b2.x += pushX;
+              b2.y += pushY;
+              b2.baseX += pushX;
+
+              // Keep within screen horizontally
+              const pad1 = b1.halfW + 15;
+              if (b1.baseX < pad1) { b1.baseX = pad1; b1.x = pad1; }
+              if (b1.baseX > width - pad1) { b1.baseX = width - pad1; b1.x = width - pad1; }
+
+              const pad2 = b2.halfW + 15;
+              if (b2.baseX < pad2) { b2.baseX = pad2; b2.x = pad2; }
+              if (b2.baseX > width - pad2) { b2.baseX = width - pad2; b2.x = width - pad2; }
+            }
+          }
+        }
       }
     }
 
@@ -1170,18 +1183,13 @@
       floatingRewards.push(new FloatingReward(x, y - 25, `+1 ⭐ ${num}`));
     }
 
-    // Strict no-duplicate selection: only pick digits not currently on screen
     function getNextNumberKey() {
       const activeNumberSet = new Set(balloons.map(b => b.number));
       const availableNumbers = NUMBER_KEYS.filter(k => !activeNumberSet.has(k));
 
-      // If all numbers 0-9 are currently active on screen, cannot spawn a duplicate
-      if (availableNumbers.length === 0) {
-        return null;
-      }
+      if (availableNumbers.length === 0) return null;
 
       if (isSequentialMode) {
-        // Find next sequential number from nextNumIndex that is not currently active
         for (let i = 0; i < NUMBER_KEYS.length; i++) {
           const candidateIdx = (nextNumIndex + i) % NUMBER_KEYS.length;
           const candidate = NUMBER_KEYS[candidateIdx];
@@ -1192,7 +1200,6 @@
         }
         return null;
       } else {
-        // Prioritize uncollected numbers among the currently available ones
         const uncollectedAvailable = availableNumbers.filter(k => !collectedNumbers.has(k));
         if (uncollectedAvailable.length > 0 && Math.random() < 0.7) {
           return uncollectedAvailable[Math.floor(Math.random() * uncollectedAvailable.length)];
@@ -1201,19 +1208,53 @@
       }
     }
 
-    function spawnNumberBalloon(customX = null) {
-      const maxBalloons = Math.min(NUMBER_KEYS.length, Math.max(4, Math.floor(width / 80)));
-      if (balloons.length >= maxBalloons && customX === null) {
-        return;
+    // Overlap prevention on spawn: picks a non-overlapping X coordinate
+    function findNonOverlappingSpawnPosition(candidateRadius) {
+      const margin = candidateRadius + 18;
+      const minDistance = candidateRadius * 2 + 35;
+      
+      // Look for balloons currently near the bottom of the screen
+      const bottomBalloons = balloons.filter(b => b.y > height * 0.65);
+
+      let bestX = null;
+      let maxDistToNearest = -1;
+
+      // Try multiple random probe positions
+      for (let attempt = 0; attempt < 25; attempt++) {
+        const testX = margin + Math.random() * (width - margin * 2);
+        let nearestDist = Infinity;
+
+        for (const b of bottomBalloons) {
+          const d = Math.abs(b.x - testX);
+          if (d < nearestDist) nearestDist = d;
+        }
+
+        if (nearestDist >= minDistance) {
+          return testX;
+        }
+
+        if (nearestDist > maxDistToNearest) {
+          maxDistToNearest = nearestDist;
+          bestX = testX;
+        }
       }
+
+      return bestX !== null ? bestX : width / 2;
+    }
+
+    function spawnNumberBalloon(customX = null) {
+      const maxBalloons = Math.min(NUMBER_KEYS.length, Math.max(3, Math.floor(width / 110)));
+      if (balloons.length >= maxBalloons && customX === null) return;
 
       const num = getNextNumberKey();
-      // If no unique number is available (all 10 active or candidate busy), skip spawn
-      if (num === null) {
-        return;
-      }
+      if (num === null) return;
 
-      balloons.push(new NumberBalloon(num, customX));
+      const minDim = Math.min(width, height);
+      const estRadius = Math.max(86, Math.min(minDim * 0.20, 126)) * 0.58;
+      const spawnX = customX !== null ? customX : findNonOverlappingSpawnPosition(estRadius);
+      const spawnY = height + estRadius + 15;
+
+      balloons.push(new NumberBalloon(num, spawnX, spawnY));
     }
 
     function handleNumberPop(px, py) {
@@ -1263,7 +1304,7 @@
 
         const spd = SPEED_SETTINGS[currentSpeedMode];
         balloons.forEach(b => {
-          b.vy = spd.minVy + Math.random() * (spd.maxVy - spd.minVy);
+          b.vy = (spd.minVy + spd.maxVy) * 0.5;
           b.swayAmp = spd.swayAmp * (0.85 + Math.random() * 0.30);
           b.swaySpeed = spd.swaySpeed * (0.88 + Math.random() * 0.24);
           b.tiltAmp = spd.tiltAmp * (0.90 + Math.random() * 0.20);
@@ -1274,7 +1315,7 @@
     document.getElementById('btn-spawn').addEventListener('click', (e) => {
       e.stopPropagation();
       initAudio();
-      spawnNumberBalloon(Math.random() * (width - 120) + 60);
+      spawnNumberBalloon();
     });
 
     const btnSound = document.getElementById('btn-sound');
@@ -1314,12 +1355,21 @@
       spawnTimer--;
       if (spawnTimer <= 0) {
         spawnNumberBalloon();
-        spawnTimer = 85 + Math.random() * 65;
+        spawnTimer = 115 + Math.random() * 75;
       }
 
+      // Update positions
       for (let i = balloons.length - 1; i >= 0; i--) {
         const b = balloons[i];
         b.update();
+      }
+
+      // Enforce physical separation so numbers never overlap
+      resolveBalloonOverlaps();
+
+      // Render balloons
+      for (let i = balloons.length - 1; i >= 0; i--) {
+        const b = balloons[i];
         b.draw(ctx);
 
         if (b.y < -b.halfH * 2) {
@@ -1347,16 +1397,19 @@
     }
 
     window.addEventListener('load', () => {
-      // Ensure initial spawn has distinct numbers without duplication
-      const initialCount = Math.min(4, NUMBER_KEYS.length);
+      // Create initial non-overlapping staggered balloons
+      const initialCount = Math.min(3, Math.floor(width / 110));
       const shuffled = [...NUMBER_KEYS].sort(() => Math.random() - 0.5).slice(0, initialCount);
 
+      const spacing = width / (initialCount + 1);
       for (let i = 0; i < initialCount; i++) {
-        const posX = (width * 0.18) + (i * (width * 0.22));
-        const b = new NumberBalloon(shuffled[i], posX);
-        b.y = height * 0.52 + i * (height * 0.1);
+        const posX = spacing * (i + 1);
+        const posY = height * 0.45 + i * (height * 0.16);
+        const b = new NumberBalloon(shuffled[i], posX, posY);
         balloons.push(b);
       }
+
+      resolveBalloonOverlaps();
       requestAnimationFrame(gameLoop);
     });
   </script>

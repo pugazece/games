@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#120c2e">
   <title>Number Foil Balloon Pop! 🎈🔢</title>
   
-  <!-- Standalone Manifest Data URI with unique id, name, and start_url to prevent overwriting BallonPop -->
   <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22id%22%3A%22number-balloon-pop-unique%22%2C%22name%22%3A%22Number%20Foil%20Balloon%20Pop%22%2C%22short_name%22%3A%22NumberPop%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0a28%22%2C%22theme_color%22%3A%22%23120c2e%22%7D">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -338,7 +337,6 @@
 
       <div class="controls-group">
         <div class="speed-selector" id="speed-selector" title="Speed Settings">
-          <!-- Slow is selected by default -->
           <button class="speed-btn selected" data-speed="slow" aria-label="Slow mode">🐢</button>
           <button class="speed-btn" data-speed="normal" aria-label="Normal mode">🐰</button>
           <button class="speed-btn" data-speed="fast" aria-label="Fast mode">🐆</button>
@@ -379,17 +377,18 @@
   </div>
 
   <script>
+    // Explicit phonetic voice mapping: 0 pronounced explicitly as "zero", all others as their number names
     const NUMBER_DATA = {
-      '0': { word: 'Zero', glowColor: '#ff2a55', lightColor: '#ff708d', darkColor: '#a10023', hue: 345, noteFreq: 261.63 },
-      '1': { word: 'One', glowColor: '#ff9f1c', lightColor: '#ffd166', darkColor: '#bc5b00', hue: 35, noteFreq: 293.66 },
-      '2': { word: 'Two', glowColor: '#ffb703', lightColor: '#ffe082', darkColor: '#b57900', hue: 48, noteFreq: 329.63 },
-      '3': { word: 'Three', glowColor: '#06d6a0', lightColor: '#80ffdb', darkColor: '#00664d', hue: 164, noteFreq: 349.23 },
-      '4': { word: 'Four', glowColor: '#00b4d8', lightColor: '#68d8d6', darkColor: '#005f73', hue: 190, noteFreq: 392.00 },
-      '5': { word: 'Five', glowColor: '#4361ee', lightColor: '#7b92ff', darkColor: '#1d2a85', hue: 228, noteFreq: 440.00 },
-      '6': { word: 'Six', glowColor: '#7209b7', lightColor: '#b5179e', darkColor: '#3c096c', hue: 276, noteFreq: 493.88 },
-      '7': { word: 'Seven', glowColor: '#ff007f', lightColor: '#ff80bf', darkColor: '#99004d', hue: 330, noteFreq: 523.25 },
-      '8': { word: 'Eight', glowColor: '#e05780', lightColor: '#ff9ebb', darkColor: '#8f1d41', hue: 342, noteFreq: 587.33 },
-      '9': { word: 'Nine', glowColor: '#38b000', lightColor: '#70e000', darkColor: '#004b23', hue: 100, noteFreq: 659.25 }
+      '0': { word: 'Zero', speakText: 'zero', glowColor: '#ff2a55', lightColor: '#ff708d', darkColor: '#a10023', hue: 345, noteFreq: 261.63 },
+      '1': { word: 'One', speakText: 'one', glowColor: '#ff9f1c', lightColor: '#ffd166', darkColor: '#bc5b00', hue: 35, noteFreq: 293.66 },
+      '2': { word: 'Two', speakText: 'two', glowColor: '#ffb703', lightColor: '#ffe082', darkColor: '#b57900', hue: 48, noteFreq: 329.63 },
+      '3': { word: 'Three', speakText: 'three', glowColor: '#06d6a0', lightColor: '#80ffdb', darkColor: '#00664d', hue: 164, noteFreq: 349.23 },
+      '4': { word: 'Four', speakText: 'four', glowColor: '#00b4d8', lightColor: '#68d8d6', darkColor: '#005f73', hue: 190, noteFreq: 392.00 },
+      '5': { word: 'Five', speakText: 'five', glowColor: '#4361ee', lightColor: '#7b92ff', darkColor: '#1d2a85', hue: 228, noteFreq: 440.00 },
+      '6': { word: 'Six', speakText: 'six', glowColor: '#7209b7', lightColor: '#b5179e', darkColor: '#3c096c', hue: 276, noteFreq: 493.88 },
+      '7': { word: 'Seven', speakText: 'seven', glowColor: '#ff007f', lightColor: '#ff80bf', darkColor: '#99004d', hue: 330, noteFreq: 523.25 },
+      '8': { word: 'Eight', speakText: 'eight', glowColor: '#e05780', lightColor: '#ff9ebb', darkColor: '#8f1d41', hue: 342, noteFreq: 587.33 },
+      '9': { word: 'Nine', speakText: 'nine', glowColor: '#38b000', lightColor: '#70e000', darkColor: '#004b23', hue: 100, noteFreq: 659.25 }
     };
 
     const NUMBER_KEYS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -536,11 +535,13 @@
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
+    // Speaks explicitly "zero" instead of the letter "O"
     function speakNumberCounting(numKey) {
       if (!isSpeechEnabled || !('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(numKey);
+        const textToSpeak = NUMBER_DATA[numKey].speakText;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.rate = 0.95;
         utterance.pitch = 1.2;
 
@@ -778,14 +779,12 @@
     const particles = [];
     const floatingRewards = [];
 
-    // Tuned speed settings; sway amplitude tightened to keep balloons well-separated
     const SPEED_SETTINGS = {
       slow:   { minVy: 0.35, maxVy: 0.60, swayAmp: 16, swaySpeed: 0.018, tiltAmp: 0.16 },
       normal: { minVy: 0.75, maxVy: 1.10, swayAmp: 22, swaySpeed: 0.026, tiltAmp: 0.22 },
       fast:   { minVy: 1.30, maxVy: 1.75, swayAmp: 28, swaySpeed: 0.032, tiltAmp: 0.28 }
     };
     
-    // Slow by default
     let currentSpeedMode = 'slow';
 
     class NumberBalloon {
@@ -803,7 +802,6 @@
         this.y = y !== null ? y : (height + this.halfH + 20);
 
         const spd = SPEED_SETTINGS[currentSpeedMode];
-        // Use identical vertical speed across all balloons to prevent vertical overtaking/collisions
         this.vy = (spd.minVy + spd.maxVy) * 0.5;
         this.baseX = this.x;
         
@@ -1015,7 +1013,6 @@
       }
     }
 
-    // Resolves any overlapping balloon bounding circles with elastic separation
     function resolveBalloonOverlaps() {
       const minDistancePadding = 24;
       for (let iter = 0; iter < 4; iter++) {
@@ -1040,7 +1037,6 @@
               const nx = dx / dist;
               const ny = dy / dist;
 
-              // Gently separate both positions
               const pushX = nx * overlap * 0.5;
               const pushY = ny * overlap * 0.5;
 
@@ -1052,7 +1048,6 @@
               b2.y += pushY;
               b2.baseX += pushX;
 
-              // Keep within screen horizontally
               const pad1 = b1.halfW + 15;
               if (b1.baseX < pad1) { b1.baseX = pad1; b1.x = pad1; }
               if (b1.baseX > width - pad1) { b1.baseX = width - pad1; b1.x = width - pad1; }
@@ -1208,18 +1203,14 @@
       }
     }
 
-    // Overlap prevention on spawn: picks a non-overlapping X coordinate
     function findNonOverlappingSpawnPosition(candidateRadius) {
       const margin = candidateRadius + 18;
       const minDistance = candidateRadius * 2 + 35;
-      
-      // Look for balloons currently near the bottom of the screen
       const bottomBalloons = balloons.filter(b => b.y > height * 0.65);
 
       let bestX = null;
       let maxDistToNearest = -1;
 
-      // Try multiple random probe positions
       for (let attempt = 0; attempt < 25; attempt++) {
         const testX = margin + Math.random() * (width - margin * 2);
         let nearestDist = Infinity;
@@ -1358,16 +1349,13 @@
         spawnTimer = 115 + Math.random() * 75;
       }
 
-      // Update positions
       for (let i = balloons.length - 1; i >= 0; i--) {
         const b = balloons[i];
         b.update();
       }
 
-      // Enforce physical separation so numbers never overlap
       resolveBalloonOverlaps();
 
-      // Render balloons
       for (let i = balloons.length - 1; i >= 0; i--) {
         const b = balloons[i];
         b.draw(ctx);
@@ -1397,7 +1385,6 @@
     }
 
     window.addEventListener('load', () => {
-      // Create initial non-overlapping staggered balloons
       const initialCount = Math.min(3, Math.floor(width / 110));
       const shuffled = [...NUMBER_KEYS].sort(() => Math.random() - 0.5).slice(0, initialCount);
 
